@@ -4,6 +4,8 @@ import Home from './pages/Home';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
+import ConsulteeDashboard from './pages/ConsulteeDashboard';
+import ExpertDashboard from './pages/ExpertDashboard';
 import Experts from './pages/Experts';
 import ExpertProfile from './pages/ExpertProfile';
 import VideoCall from './pages/VideoCall';
@@ -19,6 +21,8 @@ function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/consultee-dashboard" element={<ConsulteeDashboard />} />
+            <Route path="/expert-dashboard" element={<ExpertDashboard />} />
             <Route path="/experts" element={<Experts />} />
             <Route path="/experts/:id" element={<ExpertProfile />} />
             <Route path="/call/:meetingLink" element={<VideoCall />} />

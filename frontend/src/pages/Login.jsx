@@ -13,7 +13,11 @@ const Login = () => {
     try {
       const { data } = await axios.post('http://localhost:5000/api/auth/login', { email, password });
       localStorage.setItem('userInfo', JSON.stringify(data));
-      navigate('/dashboard');
+      if (data.role === 'expert') {
+        navigate('/expert-dashboard');
+      } else {
+        navigate('/consultee-dashboard');
+      }
     } catch (err) {
       setError(err.response?.data?.message || 'Something went wrong');
     }

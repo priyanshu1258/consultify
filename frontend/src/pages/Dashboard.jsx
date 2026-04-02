@@ -42,40 +42,51 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto mt-32 px-4">
-      <h1 className="text-3xl font-bold mb-8">Dashboard</h1>
+    <div className="max-w-4xl mx-auto mt-32 px-4 pb-20">
+      <h1 className="text-4xl font-bold mb-8 text-white tracking-tight">Dashboard</h1>
       
-      <div className="bg-white shadow rounded-lg p-6">
-        <h2 className="text-xl font-semibold mb-4">Your Bookings</h2>
+      <div className="glass-card rounded-2xl p-8">
+        <h2 className="text-2xl font-medium mb-6 text-white/90">Your Appointments</h2>
         {bookings.length === 0 ? (
-          <p className="text-gray-500">No bookings found.</p>
+          <div className="text-center py-12">
+            <p className="text-white/50 text-lg">No appointments scheduled yet.</p>
+          </div>
         ) : (
           <div className="space-y-4">
             {bookings.map((booking) => (
-              <div key={booking._id} className="border p-4 rounded-md flex justify-between items-center">
+              <div key={booking._id} className="bg-white/5 border border-white/10 p-6 rounded-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4 hover:bg-white/10 transition-colors">
                 <div>
-                  <p className="font-medium">
-                    {user?.role === 'expert' ? `Session with ${booking.consulteeId?.name}` : `Session with ${booking.expertId?.name}`}
-                  </p>
-                  <p className="text-sm text-gray-500">{booking.date} at {booking.time}</p>
-                  <span className={`inline-block mt-2 px-2 py-1 text-xs rounded-full ${
-                    booking.status === 'accepted' ? 'bg-green-100 text-green-800' :
-                    booking.status === 'rejected' ? 'bg-red-100 text-red-800' :
-                    'bg-yellow-100 text-yellow-800'
+                  <h3 className="text-xl font-medium text-white mb-1">
+                    {user?.role === 'expert' ? `Session with ${booking.consulteeId?.name || 'Client'}` : `Session with ${booking.expertId?.name || 'Expert'}`}
+                  </h3>
+                  <div className="flex items-center gap-3 text-white/60 mb-3">
+                    <span className="flex items-center gap-1">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                      {booking.date}
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                      {booking.time}
+                    </span>
+                  </div>
+                  <span className={`inline-block px-3 py-1 text-xs font-medium rounded-full ${
+                    booking.status === 'accepted' ? 'bg-green-500/20 text-green-300 border border-green-500/30' :
+                    booking.status === 'rejected' ? 'bg-red-500/20 text-red-300 border border-red-500/30' :
+                    'bg-yellow-500/20 text-yellow-300 border border-yellow-500/30'
                   }`}>
                     {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
                   </span>
                 </div>
                 
-                <div className="text-right space-x-2">
+                <div className="flex flex-wrap gap-2 md:text-right w-full md:w-auto">
                   {user?.role === 'expert' && booking.status === 'pending' && (
                     <>
-                      <button onClick={() => updateBookingStatus(booking._id, 'accepted')} className="bg-green-500 text-white px-3 py-1 rounded text-sm hover:bg-green-600">Accept</button>
-                      <button onClick={() => updateBookingStatus(booking._id, 'rejected')} className="bg-red-500 text-white px-3 py-1 rounded text-sm hover:bg-red-600">Reject</button>
+                      <button onClick={() => updateBookingStatus(booking._id, 'accepted')} className="liquid-button text-white px-5 py-2 rounded-lg text-sm font-medium transition-all">Accept</button>
+                      <button onClick={() => updateBookingStatus(booking._id, 'rejected')} className="bg-red-500/20 text-red-300 hover:bg-red-500/30 border border-red-500/30 px-5 py-2 rounded-lg text-sm font-medium transition-all">Reject</button>
                     </>
                   )}
                   {booking.status === 'accepted' && (
-                    <Link to={`/call/${booking.meetingLink}`} className="inline-block bg-blue-600 text-white px-4 py-2 rounded text-sm hover:bg-blue-700">
+                    <Link to={`/call/${booking.meetingLink || 'demo-room'}`} className="liquid-button bg-blue-600/50 hover:bg-blue-600/70 border-blue-500/50 text-white px-6 py-2 rounded-lg text-sm font-medium text-center w-full md:w-auto transition-all text-center">
                       Join Call
                     </Link>
                   )}
