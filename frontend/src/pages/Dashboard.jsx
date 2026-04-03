@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../api';
 import { useNavigate, Link } from 'react-router-dom';
 
 const Dashboard = () => {
@@ -22,7 +22,7 @@ const Dashboard = () => {
       const config = {
         headers: { Authorization: `Bearer ${userInfo.token}` }
       };
-      const { data } = await axios.get('http://localhost:5000/api/bookings', config);
+      const { data } = await api.get('/api/bookings', config);
       setBookings(data);
     } catch (error) {
       console.error(error);
@@ -34,7 +34,7 @@ const Dashboard = () => {
       const config = {
         headers: { Authorization: `Bearer ${user.token}` }
       };
-      await axios.put(`http://localhost:5000/api/bookings/${id}/status`, { status }, config);
+      await api.put(`/api/bookings/${id}/status`, { status }, config);
       fetchBookings(user);
     } catch (error) {
       console.error(error);

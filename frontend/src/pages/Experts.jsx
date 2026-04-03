@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../api';
 import { Link } from 'react-router-dom';
 
 const Experts = () => {
@@ -9,7 +9,7 @@ const Experts = () => {
   useEffect(() => {
     const fetchExperts = async () => {
       try {
-        const { data } = await axios.get('http://localhost:5000/api/users/experts');
+        const { data } = await api.get('/api/users/experts');
         setExperts(data);
         setLoading(false);
       } catch (error) {

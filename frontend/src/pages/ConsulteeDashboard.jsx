@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../api';
 import { useNavigate, Link } from 'react-router-dom';
 
 const STATUS_COLORS = {
@@ -34,7 +34,7 @@ const ConsulteeDashboard = () => {
 
   const fetchBookings = async (userInfo) => {
     try {
-      const { data } = await axios.get('http://localhost:5000/api/bookings', {
+      const { data } = await api.get('/api/bookings', {
         headers: { Authorization: `Bearer ${userInfo.token}` },
       });
       setBookings(data);

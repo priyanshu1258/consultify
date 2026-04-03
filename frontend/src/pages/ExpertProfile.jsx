@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../api';
 import { useParams, useNavigate } from 'react-router-dom';
 
 const ExpertProfile = () => {
@@ -15,7 +15,7 @@ const ExpertProfile = () => {
   useEffect(() => {
     const fetchExpert = async () => {
       try {
-        const { data } = await axios.get(`http://localhost:5000/api/users/experts/${id}`);
+        const { data } = await api.get(`/api/users/experts/${id}`);
         setExpert(data);
         setLoading(false);
       } catch (err) {
@@ -39,7 +39,7 @@ const ExpertProfile = () => {
       const config = {
         headers: { Authorization: `Bearer ${userInfo.token}` }
       };
-      await axios.post('http://localhost:5000/api/bookings', { expertId: id, date, time }, config);
+      await api.post('/api/bookings', { expertId: id, date, time }, config);
       setSuccess('Booking request sent successfully!');
       setDate('');
       setTime('');

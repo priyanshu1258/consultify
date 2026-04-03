@@ -3,13 +3,13 @@
 
 @layer base {
   :root {
-    --background: 220 20% 5%;
+    --background: 240 10% 4%; /* Deep, slightly cool black #09090b */
     --foreground: 0 0% 100%;
 
-    --primary: 217 91% 60%;
+    --primary: 24 98% 50%; /* Vibrant orange */
     --primary-foreground: 0 0% 98%;
 
-    --border: 220 15% 15%;
+    --border: 240 5% 15%;
     --radius: 1rem;
   }
 
