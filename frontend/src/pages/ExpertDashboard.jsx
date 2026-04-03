@@ -288,133 +288,184 @@ export default function ExpertDashboard() {
           </div>
         </header>
 
-        {/* Page body */}
         <div className="flex-1 overflow-y-auto p-6 space-y-6">
 
-          {/* Greeting */}
-          <div>
-            <h1 className="text-2xl font-bold text-white">
-              Good day, <span style={{ color: '#C084FC' }}>{user?.name?.split(' ')[0] || 'Expert'}</span> 👋
-            </h1>
-            <p className="text-white/30 text-sm mt-0.5">Here's what's happening with your sessions today.</p>
-          </div>
-
-          {/* Stat Cards Row */}
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <StatCard label="Total Requests" value={stats.total} change={12} color="#8B5CF6" chart={sparkVisibility} />
-            <StatCard label="Accepted" value={stats.accepted} change={8}  color="#10B981" chart={sparkRevenue} />
-            <StatCard label="Pending" value={stats.pending} color="#F59E0B" />
-            <StatCard label="Rejected" value={stats.rejected} color="#EF4444" />
-          </div>
-
-          {/* Middle charts row */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-
-            {/* Visibility / Session Activity */}
-            <div
-              className="lg:col-span-2 rounded-2xl p-5"
-              style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}
-            >
-              <div className="flex items-start justify-between mb-1">
-                <div>
-                  <p className="text-white font-semibold text-sm">Session Activity</p>
-                  <p className="text-white/30 text-xs">Bookings trend analysis</p>
-                </div>
-                <span className="text-white/20 text-xs border border-white/10 px-2 py-0.5 rounded-full">This month</span>
-              </div>
-              <div className="mt-4">
-                <AreaChart color="#8B5CF6" points={[...sparkVisibility, ...sparkRevenue.slice(0, 4)]} height={120} />
-              </div>
-              <div className="flex gap-6 mt-3">
-                <div className="flex items-center gap-1.5 text-xs text-white/50">
-                  <span className="w-2 h-2 rounded-full bg-purple-500" />Requests
-                </div>
-                <div className="flex items-center gap-1.5 text-xs text-white/50">
-                  <span className="w-2 h-2 rounded-full" style={{ background: '#10B981' }} />Accepted
-                </div>
-              </div>
-            </div>
-
-            {/* Acceptance Rate donut + User count */}
-            <div className="flex flex-col gap-4">
-              <div
-                className="rounded-2xl p-5 flex flex-col items-center justify-center flex-1"
-                style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}
-              >
-                <p className="text-white/40 text-xs uppercase tracking-widest mb-3">Acceptance Rate</p>
-                <Donut pct={acceptRate} color="#8B5CF6" size={110} label="of all requests" />
+          {activeNav === 'dashboard' && (
+            <>
+              {/* Greeting */}
+              <div>
+                <h1 className="text-2xl font-bold text-white">
+                  Good day, <span style={{ color: '#C084FC' }}>{user?.name?.split(' ')[0] || 'Expert'}</span> 👋
+                </h1>
+                <p className="text-white/30 text-sm mt-0.5">Here's what's happening with your sessions today.</p>
               </div>
 
-              <div
-                className="rounded-2xl p-5"
-                style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}
-              >
-                <p className="text-white/40 text-xs uppercase tracking-widest mb-2">Pending Rate</p>
-                <div className="flex items-end justify-between">
-                  <div>
-                    <p className="text-white text-sm opacity-60 mb-1">{stats.pending} session{stats.pending !== 1 ? 's' : ''} waiting</p>
-                    <div className="w-full h-2 rounded-full bg-white/10 mt-2" style={{ width: 120 }}>
-                      <div
-                        className="h-2 rounded-full transition-all"
-                        style={{ width: `${pendingRate}%`, background: 'linear-gradient(to right,#F59E0B,#EF4444)' }}
-                      />
+              {/* Stat Cards Row */}
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <StatCard label="Total Requests" value={stats.total} change={12} color="#8B5CF6" chart={sparkVisibility} />
+                <StatCard label="Accepted" value={stats.accepted} change={8}  color="#10B981" chart={sparkRevenue} />
+                <StatCard label="Pending" value={stats.pending} color="#F59E0B" />
+                <StatCard label="Rejected" value={stats.rejected} color="#EF4444" />
+              </div>
+
+              {/* Middle charts row */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+
+                {/* Visibility / Session Activity */}
+                <div
+                  className="lg:col-span-2 rounded-2xl p-5"
+                  style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}
+                >
+                  <div className="flex items-start justify-between mb-1">
+                    <div>
+                      <p className="text-white font-semibold text-sm">Session Activity</p>
+                      <p className="text-white/30 text-xs">Bookings trend analysis</p>
+                    </div>
+                    <span className="text-white/20 text-xs border border-white/10 px-2 py-0.5 rounded-full">This month</span>
+                  </div>
+                  <div className="mt-4">
+                    <AreaChart color="#8B5CF6" points={[...sparkVisibility, ...sparkRevenue.slice(0, 4)]} height={120} />
+                  </div>
+                  <div className="flex gap-6 mt-3">
+                    <div className="flex items-center gap-1.5 text-xs text-white/50">
+                      <span className="w-2 h-2 rounded-full bg-purple-500" />Requests
+                    </div>
+                    <div className="flex items-center gap-1.5 text-xs text-white/50">
+                      <span className="w-2 h-2 rounded-full" style={{ background: '#10B981' }} />Accepted
                     </div>
                   </div>
-                  <p className="text-3xl font-bold text-white">{pendingRate}<span className="text-white/30 text-lg">%</span></p>
+                </div>
+
+                {/* Acceptance Rate donut + User count */}
+                <div className="flex flex-col gap-4">
+                  <div
+                    className="rounded-2xl p-5 flex flex-col items-center justify-center flex-1"
+                    style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}
+                  >
+                    <p className="text-white/40 text-xs uppercase tracking-widest mb-3">Acceptance Rate</p>
+                    <Donut pct={acceptRate} color="#8B5CF6" size={110} label="of all requests" />
+                  </div>
+
+                  <div
+                    className="rounded-2xl p-5"
+                    style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}
+                  >
+                    <p className="text-white/40 text-xs uppercase tracking-widest mb-2">Pending Rate</p>
+                    <div className="flex items-end justify-between">
+                      <div>
+                        <p className="text-white text-sm opacity-60 mb-1">{stats.pending} session{stats.pending !== 1 ? 's' : ''} waiting</p>
+                        <div className="w-full h-2 rounded-full bg-white/10 mt-2" style={{ width: 120 }}>
+                          <div
+                            className="h-2 rounded-full transition-all"
+                            style={{ width: `${pendingRate}%`, background: 'linear-gradient(to right,#F59E0B,#EF4444)' }}
+                          />
+                        </div>
+                      </div>
+                      <p className="text-3xl font-bold text-white">{pendingRate}<span className="text-white/30 text-lg">%</span></p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Requests Table */}
+              <div
+                className="rounded-2xl p-6"
+                style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <p className="text-white font-semibold text-sm">Session Requests</p>
+                    <p className="text-white/30 text-xs">Manage all incoming bookings</p>
+                  </div>
+                  <div className="flex gap-2">
+                    {['All', 'Pending', 'Accepted'].map(f => (
+                      <button
+                        key={f}
+                        className="text-xs px-3 py-1 rounded-full text-white/50 border border-white/10 hover:text-white hover:border-purple-500/40 transition-all"
+                      >
+                        {f}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {loading ? (
+                  <div className="flex justify-center py-10">
+                    <div
+                      className="w-7 h-7 rounded-full border-4 animate-spin"
+                      style={{ borderColor: 'rgba(168,85,247,0.2)', borderTopColor: '#A855F7' }}
+                    />
+                  </div>
+                ) : bookings.length === 0 ? (
+                  <div className="text-center py-12">
+                    <p className="text-5xl mb-3">📭</p>
+                    <p className="text-white/40 text-sm">No session requests yet.</p>
+                    <p className="text-white/20 text-xs mt-1">Clients will appear here when they book with you.</p>
+                  </div>
+                ) : (
+                  <div>
+                    {bookings.map(b => (
+                      <BookingRow
+                        key={b._id}
+                        booking={b}
+                        onAccept={(id) => updateStatus(id, 'accepted')}
+                        onReject={(id) => updateStatus(id, 'rejected')}
+                        updating={updating}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+
+          {activeNav === 'profile' && (
+            <div className="max-w-3xl">
+              <h2 className="text-2xl font-bold text-white mb-6">Your Expert Profile</h2>
+              <div className="rounded-2xl p-8 space-y-8" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}>
+                <div className="flex items-center gap-6 pb-8 border-b border-white/10">
+                  <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-purple-500/30 to-pink-500/30 border border-white/10 flex items-center justify-center text-4xl">
+                    🧑‍💼
+                  </div>
+                  <div>
+                    <h3 className="text-3xl font-bold text-white">{user?.name}</h3>
+                    <p className="text-white/50">{user?.email}</p>
+                    <span className="inline-block mt-2 px-3 py-1 rounded-full text-xs font-semibold bg-purple-500/20 text-purple-300 border border-purple-500/30">
+                      Expert Account
+                    </span>
+                  </div>
+                </div>
+
+                <div>
+                  <h3 className="text-white/40 text-xs tracking-widest uppercase mb-3">Professional Bio</h3>
+                  <p className="text-white/90 text-lg leading-relaxed">{user?.bio || 'You have not added a bio yet.'}</p>
+                </div>
+                
+                <div>
+                  <h3 className="text-white/40 text-xs tracking-widest uppercase mb-3">Skills & Expertise</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {user?.skills?.length > 0 ? user.skills.map((skill, i) => (
+                      <span key={i} className="px-4 py-1.5 rounded-xl bg-white/5 text-white/80 border border-white/10 text-sm">
+                        {skill}
+                      </span>
+                    )) : <p className="text-white/50 italic">No skills listed.</p>}
+                  </div>
+                </div>
+                
+                <div>
+                  <h3 className="text-white/40 text-xs tracking-widest uppercase mb-3">Session Pricing</h3>
+                  <p className="text-4xl font-bold text-emerald-400">${user?.pricingPerSession || 0} <span className="text-sm font-normal text-emerald-400/50">USD / session</span></p>
                 </div>
               </div>
             </div>
-          </div>
+          )}
 
-          {/* Requests Table */}
-          <div
-            className="rounded-2xl p-6"
-            style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)' }}
-          >
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <p className="text-white font-semibold text-sm">Session Requests</p>
-                <p className="text-white/30 text-xs">Manage all incoming bookings</p>
-              </div>
-              <div className="flex gap-2">
-                {['All', 'Pending', 'Accepted'].map(f => (
-                  <button
-                    key={f}
-                    className="text-xs px-3 py-1 rounded-full text-white/50 border border-white/10 hover:text-white hover:border-purple-500/40 transition-all"
-                  >
-                    {f}
-                  </button>
-                ))}
-              </div>
+          {activeNav !== 'dashboard' && activeNav !== 'profile' && (
+            <div className="flex flex-col items-center justify-center h-64 text-white/40">
+              <span className="text-4xl mb-4">🚧</span>
+              <p>This section is under construction.</p>
             </div>
-
-            {loading ? (
-              <div className="flex justify-center py-10">
-                <div
-                  className="w-7 h-7 rounded-full border-4 animate-spin"
-                  style={{ borderColor: 'rgba(168,85,247,0.2)', borderTopColor: '#A855F7' }}
-                />
-              </div>
-            ) : bookings.length === 0 ? (
-              <div className="text-center py-12">
-                <p className="text-5xl mb-3">📭</p>
-                <p className="text-white/40 text-sm">No session requests yet.</p>
-                <p className="text-white/20 text-xs mt-1">Clients will appear here when they book with you.</p>
-              </div>
-            ) : (
-              <div>
-                {bookings.map(b => (
-                  <BookingRow
-                    key={b._id}
-                    booking={b}
-                    onAccept={(id) => updateStatus(id, 'accepted')}
-                    onReject={(id) => updateStatus(id, 'rejected')}
-                    updating={updating}
-                  />
-                ))}
-              </div>
-            )}
-          </div>
+          )}
 
         </div>
       </div>
