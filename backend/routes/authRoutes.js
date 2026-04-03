@@ -81,7 +81,7 @@ router.post('/send-otp', async (req, res) => {
 // @desc    Register a new user (consultee or expert)
 router.post('/register', async (req, res) => {
   try {
-    const { firstName, lastName, mobile, email, password, role, bio, pricingPerSession, skills, otp } = req.body;
+    const { firstName, lastName, mobile, email, password, role, gender, profilePicture, bio, pricingPerSession, skills, expertDocuments, otp } = req.body;
     
     if (!otp) return res.status(400).json({ message: 'OTP is required' });
 
@@ -95,7 +95,9 @@ router.post('/register', async (req, res) => {
 
     const user = await User.create({ 
       name, email, mobile, password, role: role || 'consultee',
-      bio, pricingPerSession, skills
+      gender, profilePicture: profilePicture || null,
+      bio, pricingPerSession, skills,
+      expertDocuments: expertDocuments || []
     });
     
     // remove the otp after successful registration
@@ -107,9 +109,12 @@ router.post('/register', async (req, res) => {
         name: user.name,
         email: user.email,
         role: user.role,
+        gender: user.gender,
+        profilePicture: user.profilePicture,
         bio: user.bio,
         pricingPerSession: user.pricingPerSession,
         skills: user.skills,
+        expertDocuments: user.expertDocuments,
         token: generateToken(user._id)
       });
     }

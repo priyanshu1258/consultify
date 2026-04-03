@@ -7,15 +7,22 @@ const userSchema = new mongoose.Schema({
   mobile: { type: String },
   password: { type: String, required: true },
   role: { type: String, enum: ['consultee', 'expert'], default: 'consultee' },
+  gender: { type: String, enum: ['Male', 'Female', 'Non-binary', 'Prefer not to say'] },
+  profilePicture: { type: String, default: null }, // base64 data URL
   
   // Expert specific fields
   skills: [{ type: String }],
   bio: { type: String },
   pricingPerSession: { type: Number, default: 0 },
   availabilitySlots: [{
-    day: { type: String }, // e.g., 'Monday'
-    startTime: { type: String }, // e.g., '09:00'
-    endTime: { type: String } // e.g., '17:00'
+    day: { type: String },
+    startTime: { type: String },
+    endTime: { type: String }
+  }],
+  expertDocuments: [{
+    name: { type: String },
+    type: { type: String }, // 'application/pdf' or image MIME
+    data: { type: String }  // base64 data URL
   }]
 }, { timestamps: true });
 
