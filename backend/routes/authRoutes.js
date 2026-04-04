@@ -4,7 +4,18 @@ const User = require('../models/User');
 const Otp = require('../models/Otp');
 const jwt = require('jsonwebtoken');
 const nodemailer = require('nodemailer');
+const multer = require('multer');
+const path = require('path');
 
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, 'uploads/')
+  },
+  filename: function (req, file, cb) {
+    cb(null, Date.now() + '-' + file.originalname)
+  }
+});
+const upload = multer({ storage: storage });
 let transporter;
 const initializeTransporter = async () => {
   try {
@@ -88,9 +99,10 @@ router.post('/send-otp', async (req, res) => {
 
 // @route   POST /api/auth/register
 // @desc    Register a new user (consultee or expert)
-router.post('/register', async (req, res) => {
+router.post('/register', upload.array('expertDocuments', 5), async (req, res) => {
   try {
-    const { firstName, lastName, mobile, email, password, role, gender, profilePicture, bio, pricingPerSession, skills, expertDocuments, otp } = req.body;
+    const { firstName, lastName, mobile, email, password, role, gender, profilePicture, bio, pricingPerSession, otp } = req.body;
+    let { skills, expertDocuments } = req.body;
     
     if (!otp) return res.status(400).json({ message: 'OTP is required' });
 
@@ -101,12 +113,36 @@ router.post('/register', async (req, res) => {
     if (userExists) return res.status(400).json({ message: 'User already exists' });
 
     const name = `${firstName} ${lastName}`.trim();
+    
+    let parsedSkills = [];
+    if (skills) {
+      if (typeof skills === 'string') {
+        parsedSkills = skills.split(',').map(s => s.trim());
+      } else if (Array.isArray(skills)) {
+        parsedSkills = skills;
+      }
+    }
+
+    let docsToSave = [];
+    if (req.files && req.files.length > 0) {
+      docsToSave = req.files.map(file => ({
+        name: file.originalname,
+        type: file.mimetype,
+        data: `/uploads/${file.filename}`
+      }));
+    } else if (expertDocuments) {
+      if (typeof expertDocuments === 'string') {
+        try { docsToSave = JSON.parse(expertDocuments); } catch(e) {}
+      } else {
+        docsToSave = expertDocuments;
+      }
+    }
 
     const user = await User.create({ 
       name, email, mobile, password, role: role || 'consultee',
-      gender, profilePicture: profilePicture || null,
-      bio, pricingPerSession, skills,
-      expertDocuments: expertDocuments || []
+      gender, profilePicture: profilePicture === 'null' ? null : (profilePicture || null),
+      bio, pricingPerSession, skills: parsedSkills,
+      expertDocuments: docsToSave
     });
     
     // remove the otp after successful registration

@@ -1,0 +1,23 @@
+[
+  {
+    "name": "ac-va0kbob-shard-00-00.yxkkx9c.mongodb.net",
+    "port": 27017,
+    "priority": 0,
+    "weight": 0,
+    "type": "SRV"
+  },
+  {
+    "name": "ac-va0kbob-shard-00-02.yxkkx9c.mongodb.net",
+    "port": 27017,
+    "priority": 0,
+    "weight": 0,
+    "type": "SRV"
+  },
+  {
+    "name": "ac-va0kbob-shard-00-01.yxkkx9c.mongodb.net",
+    "port": 27017,
+    "priority": 0,
+    "weight": 0,
+    "type": "SRV"
+  }
+]

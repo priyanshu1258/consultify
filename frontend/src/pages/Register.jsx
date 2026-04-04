@@ -341,16 +341,12 @@ const Register = () => {
       newDocs.push(file);
     }
 
-    // Convert all valid files to base64
+    // Convert all valid files to state containing raw File
     newDocs.forEach(file => {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setExpertDocs(prev => [
-          ...prev,
-          { name: file.name, size: file.size, type: file.type, data: reader.result }
-        ]);
-      };
-      reader.readAsDataURL(file);
+      setExpertDocs(prev => [
+        ...prev,
+        { name: file.name, size: file.size, type: file.type, file: file, data: '' }
+      ]);
     });
     e.target.value = '';
   };
@@ -384,17 +380,31 @@ const Register = () => {
     setLoading(true);
     setError('');
     try {
-      const payload = {
-        firstName, lastName, mobile, email, password, role, gender, otp,
-        profilePicture: profilePic || null,
-        ...(role === 'expert' && {
-          bio,
-          pricingPerSession: Number(pricingPerSession),
-          skills: skills.split(',').map(s => s.trim()),
-          expertDocuments: expertDocs.map(d => ({ name: d.name, type: d.type, data: d.data })),
-        }),
-      };
-      const { data } = await api.post('/api/auth/register', payload);
+      const formData = new FormData();
+      formData.append('firstName', firstName);
+      formData.append('lastName', lastName);
+      formData.append('mobile', mobile);
+      formData.append('email', email);
+      formData.append('password', password);
+      formData.append('role', role);
+      formData.append('gender', gender);
+      formData.append('otp', otp);
+      if (profilePic) formData.append('profilePicture', profilePic);
+      
+      if (role === 'expert') {
+        formData.append('bio', bio);
+        formData.append('pricingPerSession', Number(pricingPerSession));
+        formData.append('skills', skills);
+        expertDocs.forEach(d => {
+          if (d.file) {
+            formData.append('expertDocuments', d.file);
+          }
+        });
+      }
+      
+      const { data } = await api.post('/api/auth/register', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
       localStorage.setItem('userInfo', JSON.stringify(data));
       navigate(data.role === 'expert' ? '/expert-dashboard' : '/consultee-dashboard');
     } catch (err) {

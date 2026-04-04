@@ -7,6 +7,8 @@ const AdminDashboard = () => {
   const [experts, setExperts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('payments');
+  const [selectedDocs, setSelectedDocs] = useState(null);
+  const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -141,7 +143,7 @@ const AdminDashboard = () => {
                       <div className="flex gap-2">
                         <button 
                           className="bg-white/10 hover:bg-white/20 text-white px-4 py-2.5 rounded-xl text-sm font-medium transition-all"
-                          onClick={() => alert('Document viewer not implemented for mock.')}
+                          onClick={() => setSelectedDocs(expert.expertDocuments || [])}
                         >
                           View Docs
                         </button>
@@ -158,6 +160,50 @@ const AdminDashboard = () => {
               )}
             </div>
           )}
+        </div>
+      )}
+
+      {/* Document Viewer Modal */}
+      {selectedDocs !== null && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+          <div className="bg-[#0F1014] border border-white/10 rounded-2xl p-6 w-full max-w-2xl max-h-[80vh] flex flex-col shadow-2xl relative">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-xl font-bold text-white">Expert Documents</h3>
+              <button onClick={() => setSelectedDocs(null)} className="text-white/50 hover:text-white transition">
+                 <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                 </svg>
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto space-y-4 pr-2">
+              {selectedDocs.map((doc, idx) => {
+                const isDataUrl = doc.data && doc.data.startsWith('data:');
+                const fileUrl = isDataUrl ? doc.data : `${API_BASE_URL}${doc.data}`;
+                return (
+                  <div key={idx} className="bg-white/5 border border-white/10 rounded-xl p-4 flex flex-col gap-3">
+                    <p className="text-white font-medium">{doc.name || 'Document'}</p>
+                    <p className="text-sm text-white/50">{doc.type}</p>
+                    <div className="bg-black/50 rounded-lg overflow-hidden flex items-center justify-center border border-white/5 p-2">
+                      {doc.type === 'application/pdf' ? (
+                        <iframe src={fileUrl} className="w-full h-96 border-none bg-white object-contain rounded" />
+                      ) : (
+                        <img src={fileUrl} alt={doc.name} className="max-w-full max-h-96 object-contain rounded" />
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+              {selectedDocs.length === 0 && <p className="text-white/50">No documents found.</p>}
+            </div>
+            <div className="mt-6 flex justify-end">
+              <button 
+                onClick={() => setSelectedDocs(null)}
+                className="px-6 py-2 bg-white/10 hover:bg-white/20 text-white rounded-xl transition-all"
+              >
+                Close
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

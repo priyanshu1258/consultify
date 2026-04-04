@@ -2,6 +2,7 @@ const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
 const dotenv = require("dotenv");
+const path = require("path");
 
 dotenv.config();
 
@@ -10,6 +11,8 @@ const app = express();
 // Middleware
 app.use(cors());
 app.use(express.json());
+// Serve static uploads
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // Set up MongoDB Connection
 const PORT = process.env.PORT || 5000;
