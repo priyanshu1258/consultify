@@ -80,7 +80,7 @@ router.post('/send-otp', async (req, res) => {
       console.log(`[REAL EMAIL SENT TO] ${email} successfully!`);
     }
 
-    res.json({ message: 'OTP sent successfully', previewUrl });
+    res.json({ message: 'OTP sent successfully', previewUrl: false });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
