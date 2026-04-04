@@ -22,10 +22,12 @@ const MAX_RETRIES = 5;
 
 /* ── Connect ─────────────────────────────────────────────────────────── */
 let isConnecting = false;
+let pendingTimeout = null;
 
 const connectToWhatsApp = async () => {
   if (isConnecting) return;
   isConnecting = true;
+  if (pendingTimeout) clearTimeout(pendingTimeout);
 
   try {
     if (waState.sock) {
@@ -78,11 +80,22 @@ const connectToWhatsApp = async () => {
         retryCount = 0;
       } else if (connection === "close") {
         isConnecting = false;
-        const statusCode = lastDisconnect?.error?.output?.statusCode;
-        const isLoggedOut = statusCode === DisconnectReason.loggedOut;
+        const statusCode = parseInt(
+          lastDisconnect?.error?.output?.statusCode || "0",
+          10,
+        );
+        const isLoggedOut =
+          statusCode === DisconnectReason.loggedOut || statusCode === 401;
         const isConnectionReplaced =
-          statusCode === DisconnectReason.connectionReplaced;
+          statusCode === DisconnectReason.connectionReplaced ||
+          statusCode === 440;
 
+        if (waState.sock) {
+          try {
+            waState.sock.ev.removeAllListeners();
+            waState.sock.end(undefined);
+          } catch (e) {}
+        }
         waState.status = "disconnected";
         waState.qrDataUrl = null;
         waState.sock = null;
@@ -97,18 +110,20 @@ const connectToWhatsApp = async () => {
             fs.rmSync("baileys_auth_info", { recursive: true, force: true });
           } catch (e) {}
           retryCount = 0;
-          setTimeout(() => connectToWhatsApp(), 2000);
+          if (pendingTimeout) clearTimeout(pendingTimeout);
+          pendingTimeout = setTimeout(() => connectToWhatsApp(), 2000);
           return;
         }
 
         if (isConnectionReplaced) {
           console.log(
-            "[WhatsApp] Connection replaced (Code 440). Another instance might be running.",
+            "[WhatsApp] Connection replaced (Code 440). Another instance or socket might be running.",
           );
           console.log(
             "[WhatsApp] Waiting 10 seconds before attempting to reclaim connection...",
           );
-          setTimeout(() => connectToWhatsApp(), 10000);
+          if (pendingTimeout) clearTimeout(pendingTimeout);
+          pendingTimeout = setTimeout(() => connectToWhatsApp(), 10000);
           return;
         }
 
@@ -118,7 +133,8 @@ const connectToWhatsApp = async () => {
           console.log(
             `[WhatsApp] Reconnecting in ${delay / 1000}s… (${retryCount}/${MAX_RETRIES})`,
           );
-          setTimeout(() => connectToWhatsApp(), delay);
+          if (pendingTimeout) clearTimeout(pendingTimeout);
+          pendingTimeout = setTimeout(() => connectToWhatsApp(), delay);
         } else {
           console.log(
             "[WhatsApp] Max retries reached. Restart server to try again.",
@@ -140,7 +156,8 @@ const connectToWhatsApp = async () => {
     if (retryCount < MAX_RETRIES) {
       const delay = Math.min(2000 * 2 ** retryCount, 60000);
       retryCount++;
-      setTimeout(() => connectToWhatsApp(), delay);
+      if (pendingTimeout) clearTimeout(pendingTimeout);
+      pendingTimeout = setTimeout(() => connectToWhatsApp(), delay);
     } else {
       console.log("[WhatsApp] Max retries reached. WhatsApp OTP unavailable.");
       waState.sock = null;
@@ -150,13 +167,27 @@ const connectToWhatsApp = async () => {
 
 /* ── Send message ────────────────────────────────────────────────────── */
 const sendWhatsAppMessage = async (mobile, message) => {
-  if (!waState.sock || !waState.sock.user) {
+  if (!waState.sock || waState.status !== "connected") {
     throw new Error("[WhatsApp] Not connected.");
   }
   const cleanMobile = mobile.replace(/[^0-9]/g, "");
   const jid = `${cleanMobile}@s.whatsapp.net`;
-  await waState.sock.sendMessage(jid, { text: message });
-  console.log(`[WhatsApp] Sent to ${cleanMobile}`);
+
+  try {
+    await waState.sock.sendMessage(jid, { text: message });
+    console.log(`[WhatsApp] Sent safely to ${cleanMobile}`);
+  } catch (error) {
+    console.error(`[WhatsApp] Sending failed: ${error.message}`);
+    // If it's a 408 Timeout, the connection might be unstable, but we don't need to throw
+    // a fatal application error that tears down the async stack.
+    if (error.output && error.output.statusCode === 408) {
+      console.error(
+        "[WhatsApp] Ignored 408 Timeout, message may have still been delivered.",
+      );
+    } else {
+      throw error;
+    }
+  }
 };
 
 module.exports = { connectToWhatsApp, sendWhatsAppMessage, waState };
