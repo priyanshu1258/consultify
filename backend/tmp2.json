@@ -1,0 +1,19 @@
+[
+  {
+    "payoutStatus": "unpaid",
+    "_id": "69d0e4adb23ba8723c9351ed",
+    "consulteeId": "69d0e3d9b23ba8723c9351cb",
+    "expertId": "69d0e46cb23ba8723c9351dc",
+    "date": "2026-04-04",
+    "time": "16:05",
+    "status": "confirmed",
+    "meetingLink": "fd4d1038-6c3f-462e-bf52-c3fb27c90ef4",
+    "proposedDate": null,
+    "proposedTime": null,
+    "note": "",
+    "utrNumber": "8659154520",
+    "createdAt": "2026-04-04T10:15:09.547Z",
+    "updatedAt": "2026-04-04T10:17:25.495Z",
+    "__v": 0
+  }
+]

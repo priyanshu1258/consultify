@@ -36,6 +36,9 @@ router.put('/profile', protect, async (req, res) => {
     const user = await User.findById(req.user._id);
     if (user) {
       user.name = req.body.name || user.name;
+      if (req.body.profilePicture !== undefined) {
+        user.profilePicture = req.body.profilePicture;
+      }
       if (user.role === 'expert') {
         user.skills = req.body.skills || user.skills;
         user.bio = req.body.bio || user.bio;

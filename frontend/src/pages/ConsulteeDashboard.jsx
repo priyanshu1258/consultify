@@ -37,19 +37,23 @@ const JoinSessionButton = ({ booking }) => {
     return (
       <Link
         to={`/call/${booking.meetingLink || 'demo-room'}`}
-        className="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-xl text-sm font-medium transition-all shadow-lg shadow-emerald-900/30 inline-block text-center"
+        className="block w-full bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-white px-4 py-3 rounded-xl text-sm font-semibold transition-all duration-300 shadow-[0_0_20px_rgba(16,185,129,0.3)] hover:shadow-[0_0_25px_rgba(16,185,129,0.5)] border border-emerald-400/50 text-center tracking-wide group"
       >
-        Join Call
+        <span className="flex items-center justify-center gap-2">
+           <svg className="w-5 h-5 animate-pulse group-hover:scale-110 transition-transform" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg>
+           Join Video Session
+        </span>
       </Link>
     );
   } else {
     return (
       <button
         disabled
-        className="bg-emerald-600/40 text-white/40 px-4 py-2 rounded-xl text-sm font-medium cursor-not-allowed"
+        className="w-full bg-[#1A1C23] border border-white/10 text-white/40 px-4 py-3 rounded-xl text-sm font-medium cursor-not-allowed flex items-center justify-between"
         title="Link will be active 15 mins before session"
       >
-        Join Call <span className="text-[10px] block opacity-75">Wait</span>
+        <span>Join Video Session</span>
+        <span className="text-[10px] font-semibold uppercase tracking-wider bg-white/5 border border-white/5 px-2 py-0.5 rounded-md text-white/30">Wait</span>
       </button>
     );
   }
@@ -144,52 +148,80 @@ const ConsulteeDashboard = () => {
             </Link>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
             {bookings.map((booking) => {
               const sc = STATUS_COLORS[booking.status] || STATUS_COLORS.pending;
               return (
                 <div
                   key={booking._id}
-                  className="bg-white/5 border border-white/10 rounded-2xl p-5 hover:bg-white/8 transition-all group"
+                  className="relative group overflow-hidden bg-[#121318]/80 backdrop-blur-xl border border-white/5 rounded-3xl p-6 transition-all duration-300 hover:border-blue-500/30 hover:shadow-[0_0_30px_rgba(59,130,246,0.1)] hover:-translate-y-1"
                 >
-                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    {/* Left info */}
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500/30 to-purple-500/30 border border-white/10 flex items-center justify-center text-xl flex-shrink-0">
-                        👤
+                  {/* Subtle Background Glow on Hover */}
+                  <div className="absolute -top-10 -right-10 w-40 h-40 bg-blue-500/10 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
+
+                  <div className="flex flex-col gap-6 h-full relative z-10 flex-grow">
+                    {/* Header: Expert Info & Status */}
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-center gap-4">
+                        <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-[#1A1C23] to-[#22252E] border border-white/10 flex items-center justify-center text-xl flex-shrink-0 shadow-inner overflow-hidden relative">
+                           <div className="absolute inset-0 bg-blue-500/5 mix-blend-overlay"></div>
+                           👤
+                        </div>
+                        <div>
+                          <p className="text-white font-semibold text-lg tracking-tight">
+                            {booking.expertId?.name || 'Expert'}
+                          </p>
+                          <p className="text-white/40 text-xs mt-0.5 max-w-[120px] truncate" title={booking.expertId?.email}>
+                            {booking.expertId?.email || 'No email provided'}
+                          </p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="text-white font-semibold text-lg leading-tight">
-                          {booking.expertId?.name || 'Expert'}
-                        </p>
-                        <p className="text-white/40 text-sm">{booking.expertId?.email || ''}</p>
+                      
+                      {/* Status Badge */}
+                      <span className={`flex-shrink-0 inline-flex flex-col items-end gap-1`}>
+                        <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[11px] font-bold tracking-wide uppercase border ${sc.bg} ${sc.text} ${sc.border} shadow-sm backdrop-blur-md`}>
+                          <span className={`w-1.5 h-1.5 rounded-full ${sc.dot} ${booking.status === 'pending' || booking.status === 'payment_submitted' ? 'animate-pulse' : ''}`} />
+                          {booking.status.replace('_', ' ')}
+                        </span>
+                      </span>
+                    </div>
+
+                    {/* Divider */}
+                    <div className="w-full h-px bg-white/5"></div>
+
+                    {/* Date & Time Info */}
+                    <div className="flex flex-row items-center gap-4 text-sm bg-white/[0.02] p-3 rounded-2xl border border-white/[0.02]">
+                      <div className="flex items-center gap-3 flex-1 flex-col sm:flex-row justify-center sm:justify-start">
+                        <div className="w-8 h-8 rounded-xl bg-blue-500/10 flex items-center justify-center text-blue-400 flex-shrink-0">
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          </svg>
+                        </div>
+                        <span className="text-white/80 font-medium tracking-wide text-xs sm:text-sm">{booking.date}</span>
+                      </div>
+                      
+                      <div className="w-px h-6 bg-white/10 hidden sm:block"></div>
+
+                      <div className="flex items-center gap-3 flex-1 flex-col sm:flex-row justify-center sm:justify-start">
+                        <div className="w-8 h-8 rounded-xl bg-purple-500/10 flex items-center justify-center text-purple-400 flex-shrink-0">
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                        </div>
+                        <span className="text-white/80 font-medium tracking-wide text-xs sm:text-sm">{booking.time}</span>
                       </div>
                     </div>
 
-                    {/* Date & Time */}
-                    <div className="flex flex-wrap gap-x-6 gap-y-1 text-sm text-white/60">
-                      <span className="flex items-center gap-1.5">
-                        <svg className="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                        </svg>
-                        {booking.date}
-                      </span>
-                      <span className="flex items-center gap-1.5">
-                        <svg className="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        {booking.time}
-                      </span>
-                    </div>
-
-                    {/* Status & Action */}
-                    <div className="flex items-center gap-3 flex-shrink-0">
-                      <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium border ${sc.bg} ${sc.text} ${sc.border}`}>
-                        <span className={`w-1.5 h-1.5 rounded-full ${sc.dot}`} />
-                        {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
-                      </span>
-                      {(booking.status === 'confirmed' || booking.status === 'accepted') && (
-                        <JoinSessionButton booking={booking} />
+                    {/* Action Area (Bottom) */}
+                    <div className="mt-auto pt-2 flex justify-end w-full">
+                      {(booking.status === 'confirmed' || booking.status === 'accepted') ? (
+                        <div className="w-full">
+                           <JoinSessionButton booking={booking} />
+                        </div>
+                      ) : (
+                        <div className="w-full py-3 px-4 rounded-xl bg-white/[0.02] border border-white/5 text-center text-white/40 text-xs font-semibold uppercase tracking-widest">
+                           {booking.status === 'pending' ? 'Awaiting Confirmation' : booking.status === 'payment_submitted' ? 'Payment Verifying' : 'No Actions Available'}
+                        </div>
                       )}
                     </div>
                   </div>
