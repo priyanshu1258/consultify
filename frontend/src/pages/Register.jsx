@@ -661,7 +661,10 @@ const Register = () => {
                     </a>
                   </div>
                 ) : (
-                  <p className="text-xs text-orange-300/60 mb-4 text-center">(Check the backend terminal/console for the OTP code)</p>
+                  <div className="text-xs text-green-200/90 mb-6 bg-green-500/10 p-4 rounded-xl border border-green-500/30 text-center flex flex-col gap-2">
+                    <p className="font-semibold text-green-400 tracking-wide">Secure OTP sent successfully! ✉️</p>
+                    <p className="text-green-300/70">Please check your email inbox (and spam folder) for the 6-digit verification code.</p>
+                  </div>
                 )}
                 <label className="block text-xs font-medium text-white/50 mb-2 text-center tracking-wide">Enter Code</label>
                 <input

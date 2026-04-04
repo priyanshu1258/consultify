@@ -7,17 +7,24 @@ const nodemailer = require('nodemailer');
 
 let transporter;
 const initializeTransporter = async () => {
-  if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
-    transporter = nodemailer.createTransport({
-      service: 'gmail',
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS
-      }
-    });
-    console.log('Nodemailer Gmail account ready with real email service 🚀');
-  } else {
-    console.log('Using Ethereal fallback (Provide EMAIL_USER and EMAIL_PASS in .env for real emails)');
+  try {
+    if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
+      transporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: {
+          user: (process.env.EMAIL_USER || '').trim(),
+          pass: (process.env.EMAIL_PASS || '').trim()
+        }
+      });
+      // Verify Gmail transport
+      await transporter.verify();
+      console.log('Nodemailer Gmail account ready with real email service 🚀');
+    } else {
+      throw new Error('Gmail credentials missing');
+    }
+  } catch (err) {
+    console.warn('Gmail transport failed, falling back to Ethereal:', err.message);
+    // Use Ethereal for testing
     let account = await nodemailer.createTestAccount();
     transporter = nodemailer.createTransport({
       host: account.smtp.host,
@@ -38,11 +45,13 @@ const generateToken = (id) => {
 // @desc    Send OTP to email
 router.post('/send-otp', async (req, res) => {
   try {
+    // Ensure transporter is ready (initialize or fallback)
+    await initializeTransporter();
     const { email } = req.body;
     let userExists = await User.findOne({ email });
     if (userExists) return res.status(400).json({ message: 'User already exists' });
 
-    if (!transporter) return res.status(500).json({ message: 'Email service initializing, try again in a few seconds' });
+    if (!transporter) return res.status(500).json({ message: 'Email service failed to initialize' });
 
     // simple 6 digit otp
     const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
@@ -51,9 +60,9 @@ router.post('/send-otp', async (req, res) => {
     await Otp.deleteMany({ email }); // keep only latest
     await Otp.create({ email, otp: otpCode });
 
-    // Send actual email via Ethereal
+    // Send actual email via Ethereal or Gmail
     let info = await transporter.sendMail({
-      from: '"Consultify Registration" <no-reply@consultify.app>',
+      from: `"Consultify Registration" <${process.env.EMAIL_USER ? process.env.EMAIL_USER.trim() : 'no-reply@consultify.app'}>`,
       to: email,
       subject: "Your Consultify Verification Code",
       text: `Your OTP verification code is: ${otpCode}`,
