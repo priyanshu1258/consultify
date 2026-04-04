@@ -368,7 +368,7 @@ const Register = () => {
     setLoading(true);
     setError('');
     try {
-      const { data } = await api.post('/api/auth/send-otp', { email });
+      const { data } = await api.post('/api/auth/send-otp', { identifier: mobile, channel: 'whatsapp' });
       setPreviewUrl(data.previewUrl);
       setOtpStep(true);
     } catch (err) {

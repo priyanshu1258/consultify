@@ -8,8 +8,24 @@ const Login = () => {
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
+  const ADMIN_EMAIL = 'admin@consultify.com';
+  const ADMIN_PASS  = 'admin123';
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError('');
+
+    // ── Hardcoded admin bypass (no backend call) ──────────────────────────
+    if (email.trim().toLowerCase() === ADMIN_EMAIL && password === ADMIN_PASS) {
+      localStorage.setItem(
+        'userInfo',
+        JSON.stringify({ name: 'System Admin', email: ADMIN_EMAIL, role: 'admin', token: 'admin-static-token' })
+      );
+      navigate('/admin-dashboard');
+      return;
+    }
+    // ─────────────────────────────────────────────────────────────────────
+
     try {
       const { data } = await api.post('/api/auth/login', { email, password });
       localStorage.setItem('userInfo', JSON.stringify(data));
@@ -67,7 +83,7 @@ const Login = () => {
           </div>
           
           <button type="submit" className="w-full bg-gradient-to-r from-orange-400 to-orange-600 shadow-[0_0_20px_rgba(249,115,22,0.3)] hover:shadow-[0_0_25px_rgba(249,115,22,0.5)] border border-orange-400/50 text-white font-semibold py-3.5 rounded-xl hover:brightness-110 transition-all mt-4 text-sm tracking-wide">
-            Login in
+            Login
           </button>
         </form>
         
