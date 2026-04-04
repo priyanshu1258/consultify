@@ -3,27 +3,42 @@ const {
   useMultiFileAuthState,
   DisconnectReason,
   Browsers,
-  fetchLatestBaileysVersion,   // ← fetches WA-accepted version, fixes 405
+  fetchLatestBaileysVersion, // ← fetches WA-accepted version, fixes 405
 } = require("@whiskeysockets/baileys");
 const QRCode = require("qrcode");
-const pino   = require("pino");
+const pino = require("pino");
+
+const fs = require("fs");
 
 /* ── Shared state (read by adminRoutes) ─────────────────────────────── */
 const waState = {
-  status:    "disconnected", // "disconnected" | "qr_ready" | "connected"
+  status: "disconnected", // "disconnected" | "qr_ready" | "connected"
   qrDataUrl: null,
-  sock:      null,
+  sock: null,
 };
 
 let retryCount = 0;
 const MAX_RETRIES = 5;
 
 /* ── Connect ─────────────────────────────────────────────────────────── */
+let isConnecting = false;
+
 const connectToWhatsApp = async () => {
+  if (isConnecting) return;
+  isConnecting = true;
+
   try {
+    if (waState.sock) {
+      waState.sock.ev.removeAllListeners();
+      waState.sock.end(undefined);
+      waState.sock = null;
+    }
+
     // Fetch the latest WhatsApp Web version — prevents 405 rejections
     const { version, isLatest } = await fetchLatestBaileysVersion();
-    console.log(`[WhatsApp] Using WA version ${version.join(".")} (latest: ${isLatest})`);
+    console.log(
+      `[WhatsApp] Using WA version ${version.join(".")} (latest: ${isLatest})`,
+    );
 
     const { state, saveCreds } =
       await useMultiFileAuthState("baileys_auth_info");
@@ -46,6 +61,7 @@ const connectToWhatsApp = async () => {
 
       /* New QR — convert to green-branded data URL */
       if (qr) {
+        isConnecting = false;
         try {
           waState.qrDataUrl = await QRCode.toDataURL(qr, {
             color: { dark: "#128C7E", light: "#ffffff" },
@@ -53,48 +69,73 @@ const connectToWhatsApp = async () => {
             margin: 2,
           });
           waState.status = "qr_ready";
-          console.log("[WhatsApp] QR ready — open admin panel → WhatsApp tab to scan.");
+          console.log(
+            "[WhatsApp] QR ready — open admin panel → WhatsApp tab to scan.",
+          );
         } catch (e) {
           console.error("[WhatsApp] QR generation error:", e.message);
         }
         retryCount = 0;
-      }
-
-      if (connection === "close") {
+      } else if (connection === "close") {
+        isConnecting = false;
         const statusCode = lastDisconnect?.error?.output?.statusCode;
         const isLoggedOut = statusCode === DisconnectReason.loggedOut;
+        const isConnectionReplaced =
+          statusCode === DisconnectReason.connectionReplaced;
 
-        waState.status    = "disconnected";
+        waState.status = "disconnected";
         waState.qrDataUrl = null;
-        waState.sock      = null;
+        waState.sock = null;
 
         console.log(`[WhatsApp] Connection closed. Code: ${statusCode}`);
 
         if (isLoggedOut) {
-          console.log('[WhatsApp] Logged out — delete "baileys_auth_info" and restart.');
+          console.log(
+            '[WhatsApp] Logged out — deleting "baileys_auth_info" to restart clean.',
+          );
+          try {
+            fs.rmSync("baileys_auth_info", { recursive: true, force: true });
+          } catch (e) {}
+          retryCount = 0;
+          setTimeout(() => connectToWhatsApp(), 2000);
+          return;
+        }
+
+        if (isConnectionReplaced) {
+          console.log(
+            "[WhatsApp] Connection replaced (Code 440). Another instance might be running.",
+          );
+          console.log(
+            "[WhatsApp] Waiting 10 seconds before attempting to reclaim connection...",
+          );
+          setTimeout(() => connectToWhatsApp(), 10000);
           return;
         }
 
         if (retryCount < MAX_RETRIES) {
           const delay = Math.min(2000 * 2 ** retryCount, 60000);
           retryCount++;
-          console.log(`[WhatsApp] Reconnecting in ${delay / 1000}s… (${retryCount}/${MAX_RETRIES})`);
+          console.log(
+            `[WhatsApp] Reconnecting in ${delay / 1000}s… (${retryCount}/${MAX_RETRIES})`,
+          );
           setTimeout(() => connectToWhatsApp(), delay);
         } else {
-          console.log("[WhatsApp] Max retries reached. Restart server to try again.");
+          console.log(
+            "[WhatsApp] Max retries reached. Restart server to try again.",
+          );
         }
-
       } else if (connection === "open") {
-        retryCount        = 0;
-        waState.status    = "connected";
+        isConnecting = false;
+        retryCount = 0;
+        waState.status = "connected";
         waState.qrDataUrl = null;
         console.log("[WhatsApp] Connected! Ready to send OTPs.");
       }
     });
-
   } catch (error) {
     console.error("[WhatsApp] Init error:", error.message);
     waState.status = "disconnected";
+    isConnecting = false;
 
     if (retryCount < MAX_RETRIES) {
       const delay = Math.min(2000 * 2 ** retryCount, 60000);

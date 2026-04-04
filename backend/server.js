@@ -15,8 +15,7 @@ app.use(express.json());
 
 // Set up MongoDB Connection
 const PORT = process.env.PORT || 5000;
-const MONGO_URI =
-  process.env.MONGO_URI || "mongodb://localhost:27017/consultify";
+const MONGO_URI = process.env.MONGO_URI;
 
 mongoose
   .connect(MONGO_URI, {
@@ -45,6 +44,15 @@ mongoose
       console.log("Admin Seeding Error:", error);
     }
   })
+  .then(() => {
+    app.listen(PORT, () => {
+      console.log(`Server running on port ${PORT}`);
+      // WhatsApp is optional — don't crash the server if it fails
+      connectToWhatsApp().catch((err) =>
+        console.error("[WhatsApp] Failed to start:", err.message),
+      );
+    });
+  })
   .catch((err) => console.log("MongoDB Connection Error:", err));
 
 // Routes
@@ -55,12 +63,4 @@ app.use("/api/admin", require("./routes/adminRoutes"));
 
 app.get("/", (req, res) => {
   res.send("API is running...");
-});
-
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-  // WhatsApp is optional — don't crash the server if it fails
-  connectToWhatsApp().catch((err) =>
-    console.error("[WhatsApp] Failed to start:", err.message)
-  );
 });
