@@ -6,7 +6,7 @@ const userSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true },
   mobile: { type: String },
   password: { type: String, required: true },
-  role: { type: String, enum: ['consultee', 'expert'], default: 'consultee' },
+  role: { type: String, enum: ['consultee', 'expert', 'admin'], default: 'consultee' },
   gender: { type: String, enum: ['Male', 'Female', 'Non-binary', 'Prefer not to say'] },
   profilePicture: { type: String, default: null }, // base64 data URL
   
@@ -23,7 +23,8 @@ const userSchema = new mongoose.Schema({
     name: { type: String },
     type: { type: String }, // 'application/pdf' or image MIME
     data: { type: String }  // base64 data URL
-  }]
+  }],
+  documentsVerified: { type: Boolean, default: false }
 }, { timestamps: true });
 
 // Hash password before saving

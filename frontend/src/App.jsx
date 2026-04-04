@@ -9,6 +9,8 @@ import ExpertDashboard from './pages/ExpertDashboard';
 import Experts from './pages/Experts';
 import ExpertProfile from './pages/ExpertProfile';
 import VideoCall from './pages/VideoCall';
+import Payment from './pages/Payment';
+import AdminDashboard from './pages/AdminDashboard';
 
 function App() {
   return (
@@ -25,6 +27,8 @@ function App() {
             <Route path="/expert-dashboard" element={<ExpertDashboard />} />
             <Route path="/experts" element={<Experts />} />
             <Route path="/experts/:id" element={<ExpertProfile />} />
+            <Route path="/payment/:id" element={<Payment />} />
+            <Route path="/admin-dashboard" element={<AdminDashboard />} />
             <Route path="/call/:meetingLink" element={<VideoCall />} />
           </Routes>
         </main>

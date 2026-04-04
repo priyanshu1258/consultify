@@ -1,71 +1,52 @@
-import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Mic, MicOff, Video as VideoIcon, VideoOff, PhoneOff } from 'lucide-react';
 
 const VideoCall = () => {
   const { meetingLink } = useParams();
   const navigate = useNavigate();
-  const [micOn, setMicOn] = useState(true);
-  const [videoOn, setVideoOn] = useState(true);
 
   const handleEndCall = () => {
-    navigate('/dashboard');
+    const userInfo = JSON.parse(localStorage.getItem('userInfo'));
+    if (userInfo?.role === 'expert') {
+      navigate('/expert-dashboard');
+    } else {
+      navigate('/consultee-dashboard');
+    }
   };
 
+  const userInfo = JSON.parse(localStorage.getItem('userInfo')) || { name: 'Anonymous' };
+  
+  // Format the URL with parameters to disable Jitsi's promotional screens
+  const roomName = `ConsultifySession-${meetingLink}`;
+  const displayName = encodeURIComponent(userInfo.name);
+  
+  // Note: meet.jit.si requires the first user (moderator) to log in with Google to prevent spam.
+  // We added 'popups' to the iframe permissions so you can log in directly inside the app.
+  const jitsiUrl = `https://meet.jit.si/${roomName}#userInfo.displayName="${displayName}"&config.disableDeepLinking=true&config.prejoinPageEnabled=false`;
+
   return (
-    <div className="flex flex-col h-[85vh] mt-24 max-w-7xl mx-auto w-full px-4 bg-gray-900 rounded-xl overflow-hidden relative">
-      <div className="flex-1 p-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="bg-gray-800 rounded-lg flex items-center justify-center relative overflow-hidden">
-          {videoOn ? (
-            <div className="text-white text-center">
-              <span className="block text-6xl">👤</span>
-              <p className="mt-2">Self</p>
-            </div>
-          ) : (
-             <div className="text-gray-500 text-center">
-                <VideoOff size={48} className="mx-auto" />
-                <p className="mt-2">Video Paused</p>
-             </div>
-          )}
-          <span className="absolute bottom-4 left-4 bg-black/50 text-white px-2 py-1 rounded text-sm">You</span>
-        </div>
-
-        <div className="bg-gray-800 rounded-lg flex items-center justify-center relative overflow-hidden">
-           <div className="text-white text-center">
-              <span className="block text-6xl">🧑‍🏫</span>
-              <p className="mt-2">Other Participant</p>
-            </div>
-            <span className="absolute bottom-4 left-4 bg-black/50 text-white px-2 py-1 rounded text-sm">Participant</span>
-        </div>
+    <div className="flex flex-col h-screen pt-20 bg-gray-950 max-w-full w-full relative">
+      <div className="flex-1 w-full h-full pb-4">
+        {/* Using standard iframe ensures browser honors the 'allow' attributes immediately before load */}
+        <iframe
+          src={jitsiUrl}
+          allow="camera; microphone; fullscreen; display-capture; autoplay; clipboard-write; clipboard-read; popups; popups-to-escape-sandbox"
+          style={{ height: '100%', width: '100%', border: 'none' }}
+          title="Consultify Video Session"
+        />
       </div>
 
-      <div className="h-20 bg-gray-950 flex items-center justify-center space-x-6">
-        <button 
-          onClick={() => setMicOn(!micOn)} 
-          className={`p-4 rounded-full ${micOn ? 'bg-gray-700 text-white hover:bg-gray-600' : 'bg-red-500 text-white hover:bg-red-600'}`}
-        >
-          {micOn ? <Mic size={24} /> : <MicOff size={24} />}
-        </button>
-
-        <button 
-          onClick={() => setVideoOn(!videoOn)} 
-          className={`p-4 rounded-full ${videoOn ? 'bg-gray-700 text-white hover:bg-gray-600' : 'bg-red-500 text-white hover:bg-red-600'}`}
-        >
-          {videoOn ? <VideoIcon size={24} /> : <VideoOff size={24} />}
-        </button>
-
-        <button 
-          onClick={handleEndCall} 
-          className="p-4 rounded-full bg-red-600 text-white hover:bg-red-700 px-8 flex items-center space-x-2"
-        >
-          <PhoneOff size={24} />
-          <span>End Call</span>
-        </button>
-      </div>
-
-      <div className="absolute top-4 right-4 bg-black/60 text-white px-3 py-1 text-sm rounded-full">
-        Meeting ID: {meetingLink.substring(0, 8)}...
-      </div>
+      {/* Floating Leave Button since we cannot listen to Jitsi iframe events due to cross-origin */}
+      <button 
+        onClick={handleEndCall}
+        className="absolute bottom-8 left-1/2 -translate-x-1/2 z-50 bg-red-600 hover:bg-red-500 text-white px-8 py-3 rounded-full font-bold shadow-2xl shadow-red-900/50 flex items-center gap-2 border border-red-400/20 transition-all hover:scale-105"
+      >
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
+            <path d="M10.5 15.5l-4-4 4-4" />
+            <path d="M21 11.5v-4a2 2 0 0 0-2-2H9v12h10a2 2 0 0 0 2-2v-4" />
+            <line x1="6.5" y1="11.5" x2="16.5" y2="11.5" />
+        </svg>
+        Return to Dashboard
+      </button>
     </div>
   );
 };

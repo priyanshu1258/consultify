@@ -65,4 +65,27 @@ router.put('/:id/status', protect, async (req, res) => {
   }
 });
 
+// PUT /api/bookings/:id/pay — Consultee submits UTR
+router.put('/:id/pay', protect, async (req, res) => {
+  try {
+    const booking = await Booking.findById(req.params.id);
+    if (!booking) return res.status(404).json({ message: 'Booking not found' });
+
+    if (booking.consulteeId.toString() !== req.user._id.toString()) {
+      return res.status(401).json({ message: 'Not authorised' });
+    }
+
+    const { utrNumber } = req.body;
+    if (!utrNumber) return res.status(400).json({ message: 'UTR number is required' });
+
+    booking.utrNumber = utrNumber;
+    booking.status = 'payment_submitted';
+    const updated = await booking.save();
+    
+    res.json(updated);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
 module.exports = router;

@@ -25,13 +25,28 @@ mongoose
     retryWrites: true,
     retryReads: true,
   })
-  .then(() => console.log("MongoDB Connected"))
+  .then(async () => {
+    console.log("MongoDB Connected");
+    // Seed Admin User
+    const User = require('./models/User');
+    const adminExists = await User.findOne({ email: 'admin@consultify.com' });
+    if (!adminExists) {
+      await User.create({
+        name: 'Super Admin',
+        email: 'admin@consultify.com',
+        password: 'password123',
+        role: 'admin'
+      });
+      console.log('Admin user seeded: admin@consultify.com (password123)');
+    }
+  })
   .catch((err) => console.log("MongoDB Connection Error:", err));
 
 // Routes
 app.use("/api/auth", require("./routes/authRoutes"));
 app.use("/api/users", require("./routes/userRoutes"));
 app.use("/api/bookings", require("./routes/bookingRoutes"));
+app.use("/api/admin", require("./routes/adminRoutes"));
 
 app.get("/", (req, res) => {
   res.send("API is running...");

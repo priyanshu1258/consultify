@@ -56,9 +56,54 @@ const Donut = ({ pct = 0, color = '#f97316', size = 100 }) => {
 /* ─── Status Palette ─────────────────────────────────────────── */
 const SP = {
   pending: { bg: 'rgba(245,158,11,0.1)', border: 'rgba(245,158,11,0.25)', text: '#FCD34D', dot: '#f59e0b' },
+  payment_submitted: { bg: 'rgba(56,189,248,0.1)', border: 'rgba(56,189,248,0.25)', text: '#7DD3FC', dot: '#38bdf8' },
+  confirmed: { bg: 'rgba(16,185,129,0.1)', border: 'rgba(16,185,129,0.25)', text: '#6EE7B7', dot: '#10b981' },
   accepted: { bg: 'rgba(16,185,129,0.1)', border: 'rgba(16,185,129,0.25)', text: '#6EE7B7', dot: '#10b981' },
   rejected: { bg: 'rgba(239,68,68,0.1)', border: 'rgba(239,68,68,0.25)', text: '#FCA5A5', dot: '#ef4444' },
   completed: { bg: 'rgba(99,102,241,0.1)', border: 'rgba(99,102,241,0.25)', text: '#A5B4FC', dot: '#6366f1' },
+};
+
+const JoinSessionButton = ({ booking }) => {
+  const [enabled, setEnabled] = useState(false);
+
+  useEffect(() => {
+    const checkTime = () => {
+      if (!booking.date || !booking.time) return;
+      const sessionDate = new Date(`${booking.date}T${booking.time}`);
+      const now = new Date();
+      const diffMs = sessionDate - now;
+      const diffMins = Math.floor(diffMs / 60000);
+      
+      if (diffMins <= 15) {
+        setEnabled(true);
+      } else {
+        setEnabled(false);
+      }
+    };
+    
+    checkTime();
+    const interval = setInterval(checkTime, 60000);
+    return () => clearInterval(interval);
+  }, [booking.date, booking.time]);
+
+  if (enabled) {
+    return (
+      <Link to={`/call/${booking.meetingLink || 'demo'}`}
+        className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl text-xs font-semibold text-white transition-all hover:brightness-110"
+        style={{ background: 'rgba(16,185,129,0.12)', border: '1px solid rgba(16,185,129,0.2)', color: '#6EE7B7' }}>
+        {Icon.play} Start Session
+      </Link>
+    );
+  } else {
+    return (
+      <button disabled
+        className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl text-xs font-semibold cursor-not-allowed opacity-50"
+        style={{ background: 'rgba(16,185,129,0.05)', border: '1px solid rgba(16,185,129,0.1)', color: '#6EE7B7' }}
+        title="Starts 15 mins before time">
+        {Icon.play} Start Session (Wait)
+      </button>
+    );
+  }
 };
 
 /* ─── StatusBadge ────────────────────────────────────────────── */
@@ -225,12 +270,8 @@ const BookingCard = ({ booking, onAcceptClick, onReject, updating }) => {
           </div>
         )}
 
-        {booking.status === 'accepted' && (
-          <Link to={`/call/${booking.meetingLink || 'demo'}`}
-            className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl text-xs font-semibold text-white transition-all hover:brightness-110"
-            style={{ background: 'rgba(16,185,129,0.12)', border: '1px solid rgba(16,185,129,0.2)', color: '#6EE7B7' }}>
-            {Icon.play} Start Session
-          </Link>
+        {(booking.status === 'confirmed' || booking.status === 'accepted') && (
+          <JoinSessionButton booking={booking} />
         )}
       </div>
     </div>
@@ -568,12 +609,8 @@ export default function ExpertDashboard() {
                                     Decline
                                   </button>
                                 </div>
-                              ) : b.status === 'accepted' ? (
-                                <Link to={`/call/${b.meetingLink || 'demo'}`}
-                                  className="px-3 py-1.5 rounded-lg text-xs font-semibold inline-flex items-center gap-1.5 transition-all hover:brightness-110"
-                                  style={{ background: 'rgba(16,185,129,0.12)', border: '1px solid rgba(16,185,129,0.2)', color: '#6EE7B7' }}>
-                                  {Icon.play} Start
-                                </Link>
+                              ) : (b.status === 'confirmed' || b.status === 'accepted') ? (
+                                <JoinSessionButton booking={b} />
                               ) : <span className="text-white/15 text-xs">—</span>}
                             </td>
                           </tr>

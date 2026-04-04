@@ -26,4 +26,12 @@ const expertOnly = (req, res, next) => {
   }
 };
 
-module.exports = { protect, expertOnly };
+const adminOnly = (req, res, next) => {
+  if (req.user && req.user.role === 'admin') {
+    next();
+  } else {
+    res.status(401).json({ message: 'Not authorized as an admin' });
+  }
+};
+
+module.exports = { protect, expertOnly, adminOnly };

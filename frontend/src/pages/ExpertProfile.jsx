@@ -39,10 +39,11 @@ const ExpertProfile = () => {
       const config = {
         headers: { Authorization: `Bearer ${userInfo.token}` }
       };
-      await api.post('/api/bookings', { expertId: id, date, time }, config);
-      setSuccess('Booking request sent successfully!');
-      setDate('');
-      setTime('');
+      const { data } = await api.post('/api/bookings', { expertId: id, date, time }, config);
+      setSuccess('Booking request sent. Redirecting to payment...');
+      setTimeout(() => {
+        navigate(`/payment/${data._id}`);
+      }, 1000);
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to book session');
     }

@@ -3,9 +3,56 @@ import api from '../api';
 import { useNavigate, Link } from 'react-router-dom';
 
 const STATUS_COLORS = {
+  confirmed: { bg: 'bg-emerald-500/20', text: 'text-emerald-300', border: 'border-emerald-500/30', dot: 'bg-emerald-400' },
   accepted: { bg: 'bg-emerald-500/20', text: 'text-emerald-300', border: 'border-emerald-500/30', dot: 'bg-emerald-400' },
+  payment_submitted: { bg: 'bg-blue-500/20', text: 'text-blue-300', border: 'border-blue-500/30', dot: 'bg-blue-400' },
   rejected: { bg: 'bg-red-500/20', text: 'text-red-300', border: 'border-red-500/30', dot: 'bg-red-400' },
   pending:  { bg: 'bg-amber-500/20', text: 'text-amber-300', border: 'border-amber-500/30', dot: 'bg-amber-400' },
+};
+
+const JoinSessionButton = ({ booking }) => {
+  const [enabled, setEnabled] = useState(false);
+
+  useEffect(() => {
+    const checkTime = () => {
+      if (!booking.date || !booking.time) return;
+      const sessionDate = new Date(`${booking.date}T${booking.time}`);
+      const now = new Date();
+      const diffMs = sessionDate - now;
+      const diffMins = Math.floor(diffMs / 60000);
+      
+      if (diffMins <= 15) {
+        setEnabled(true);
+      } else {
+        setEnabled(false);
+      }
+    };
+    
+    checkTime();
+    const interval = setInterval(checkTime, 60000);
+    return () => clearInterval(interval);
+  }, [booking.date, booking.time]);
+
+  if (enabled) {
+    return (
+      <Link
+        to={`/call/${booking.meetingLink || 'demo-room'}`}
+        className="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-xl text-sm font-medium transition-all shadow-lg shadow-emerald-900/30 inline-block text-center"
+      >
+        Join Call
+      </Link>
+    );
+  } else {
+    return (
+      <button
+        disabled
+        className="bg-emerald-600/40 text-white/40 px-4 py-2 rounded-xl text-sm font-medium cursor-not-allowed"
+        title="Link will be active 15 mins before session"
+      >
+        Join Call <span className="text-[10px] block opacity-75">Wait</span>
+      </button>
+    );
+  }
 };
 
 const StatCard = ({ label, value, icon, color }) => (
@@ -141,13 +188,8 @@ const ConsulteeDashboard = () => {
                         <span className={`w-1.5 h-1.5 rounded-full ${sc.dot}`} />
                         {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
                       </span>
-                      {booking.status === 'accepted' && (
-                        <Link
-                          to={`/call/${booking.meetingLink || 'demo-room'}`}
-                          className="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-xl text-sm font-medium transition-all shadow-lg shadow-emerald-900/30"
-                        >
-                          Join Call
-                        </Link>
+                      {(booking.status === 'confirmed' || booking.status === 'accepted') && (
+                        <JoinSessionButton booking={booking} />
                       )}
                     </div>
                   </div>
