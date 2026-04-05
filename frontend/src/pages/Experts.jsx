@@ -60,7 +60,7 @@ const Experts = () => {
                     )}
                     {/* Price Ribbon */}
                     <div className="mb-2 bg-[#12131A] border border-white/5 px-3 py-1.5 rounded-lg flex items-center gap-1.5 shadow-lg">
-                       <span className="text-orange-400 font-bold text-sm tracking-wide">${expert.pricingPerSession || 0}</span>
+                       <span className="text-orange-400 font-bold text-sm tracking-wide">₹{expert.pricingPerSession || 0}</span>
                        <span className="text-white/30 text-[10px] uppercase font-semibold">/ session</span>
                     </div>
                   </div>

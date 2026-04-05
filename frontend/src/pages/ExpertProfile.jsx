@@ -95,7 +95,7 @@ const ExpertProfile = () => {
                 
                 <div className="pb-1">
                   <h1 className="text-3xl font-bold text-white tracking-tight">{expert.name}</h1>
-                  <p className="text-orange-400/90 font-semibold text-lg mt-1 tracking-wide">${expert.pricingPerSession || 0} <span className="text-white/30 font-normal text-sm">/ session</span></p>
+                  <p className="text-orange-400/90 font-semibold text-lg mt-1 tracking-wide">₹{expert.pricingPerSession || 0} <span className="text-white/30 font-normal text-sm">/ session</span></p>
                 </div>
               </div>
 
@@ -147,12 +147,9 @@ const ExpertProfile = () => {
               <div className="mt-6 pt-6 border-t border-white/5">
                 <p className="text-white/80 font-medium text-sm mb-4">Complete Payment to Book</p>
                 <div className="bg-white/5 border border-white/10 rounded-2xl p-6 flex flex-col items-center justify-center mb-4">
-                  {/* Dummy QR Code UI */}
+                  {/* Dynamic UPI QR Code UI */}
                   <div className="w-32 h-32 bg-white rounded-lg p-2 flex items-center justify-center shadow-[0_0_20px_rgba(249,115,22,0.2)]">
-                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=ConsultifyPayment&bgcolor=ffffff&color=ea580c" alt="Payment QR" className="w-full h-full object-contain mix-blend-multiply" />
-                  </div>
-                  <p className="text-white/60 text-xs mt-4 text-center">Scan to pay <span className="text-orange-400 font-semibold">${expert.pricingPerSession || 0}</span> for this session.</p>
-                </div>
+                    <img src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&bgcolor=ffffff&color=ea580c&data=${encodeURIComponent(`upi://pay?pa=priyanshuattri05@okaxis&pn=ConsultifyPayment&am=${expert.pricingPerSession || 0}&cu=INR`)}`} alt="Payment QR" className="w-full h-full object-contain mix-blend-multiply" />
                 
                 <div>
                   <label className="block text-xs font-medium text-white/50 tracking-wide mb-1.5">Transaction ID / UTI</label>
