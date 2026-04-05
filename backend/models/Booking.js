@@ -25,6 +25,11 @@ const bookingSchema = new mongoose.Schema(
     proposedDate: { type: String, default: null },
     proposedTime: { type: String, default: null },
     note: { type: String, default: "" }, // optional expert message
+    feedback: {
+      rating: { type: Number, min: 1, max: 5 },
+      comment: { type: String },
+      submittedAt: { type: Date }
+    }
   },
   { timestamps: true },
 );

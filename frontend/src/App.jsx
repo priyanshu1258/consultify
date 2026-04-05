@@ -26,7 +26,7 @@ function App() {
             <Route path="/expert-dashboard" element={<ExpertDashboard />} />
             <Route path="/experts" element={<Experts />} />
             <Route path="/experts/:id" element={<ExpertProfile />} />
-            <Route path="/call/:meetingLink" element={<VideoCall />} />
+            <Route path="/call/:meetingLink/:bookingId?" element={<VideoCall />} />
             <Route path="/admin-dashboard" element={<AdminDashboard />} />
           </Routes>
         </main>

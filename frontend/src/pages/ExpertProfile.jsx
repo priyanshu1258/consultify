@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import api from '../api';
 import { useParams, useNavigate } from 'react-router-dom';
+import Avatar from '../components/Avatar';
 
 const ExpertProfile = () => {
   const { id } = useParams();
@@ -11,6 +12,7 @@ const ExpertProfile = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [reviews, setReviews] = useState([]);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -18,6 +20,8 @@ const ExpertProfile = () => {
       try {
         const { data } = await api.get(`/api/users/experts/${id}`);
         setExpert(data);
+        const rewRes = await api.get(`/api/users/experts/${id}/reviews`);
+        setReviews(rewRes.data);
         setLoading(false);
       } catch (err) {
         console.error(err);
@@ -82,19 +86,20 @@ const ExpertProfile = () => {
             
             <div className="p-8 pt-0">
               <div className="flex items-end gap-6 -mt-12 mb-8 pb-8 border-b border-white/5">
-                <div className="relative">
-                  {expert.profilePicture ? (
-                    <img src={expert.profilePicture} alt={expert.name} className="w-28 h-28 rounded-2xl object-cover border-4 border-[#0F1014] shadow-[0_0_25px_rgba(249,115,22,0.2)]" />
-                  ) : (
-                    <div className="w-28 h-28 bg-gradient-to-br from-orange-400/20 to-orange-600/20 text-orange-400 border-4 border-[#0F1014] rounded-2xl flex items-center justify-center text-4xl font-bold shadow-[0_0_25px_rgba(249,115,22,0.2)]">
-                      {expert.name.charAt(0)}
-                    </div>
-                  )}
-                  <span className="absolute -bottom-2 -right-2 px-3 py-1 bg-white/5 backdrop-blur-md rounded-full border border-white/10 text-orange-400 text-xs font-semibold shadow-lg">Verified</span>
+                <div className="relative w-28 h-28 rounded-2xl border-4 border-[#0F1014] shadow-[0_0_25px_rgba(249,115,22,0.2)] bg-[#0F1014] shrink-0">
+                  <Avatar user={expert} className="rounded-xl overflow-hidden" />
+                  <span className="absolute -bottom-2 -right-2 px-3 py-1 bg-white/5 backdrop-blur-md rounded-full border border-white/10 text-orange-400 text-xs font-semibold shadow-lg z-10">Verified</span>
                 </div>
                 
-                <div className="pb-1">
-                  <h1 className="text-3xl font-bold text-white tracking-tight">{expert.name}</h1>
+                <div className="pb-1 w-full flex justify-between items-start">
+                  <div>
+                    <h1 className="text-3xl font-bold text-white tracking-tight">{expert.name}</h1>
+                    <div className="mt-2 flex items-center gap-1.5 bg-yellow-500/10 px-2.5 py-0.5 rounded-md border border-yellow-500/20 w-max">
+                      <svg className="w-4 h-4 text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg> 
+                      <span className="text-yellow-400 text-sm font-bold">{expert.rating ? expert.rating.toFixed(1) : 'New'}</span>
+                      {expert.reviewCount > 0 && <span className="text-yellow-400/50 text-xs font-medium ml-1">({expert.reviewCount} reviews)</span>}
+                    </div>
+                  </div>
                   <p className="text-orange-400/90 font-semibold text-lg mt-1 tracking-wide">₹{expert.pricingPerSession || 0} <span className="text-white/30 font-normal text-sm">/ session</span></p>
                 </div>
               </div>
@@ -110,6 +115,35 @@ const ExpertProfile = () => {
                   </span>
                 ))}
               </div>
+
+              {reviews && reviews.length > 0 && (
+                <div className="mt-12 border-t border-white/5 pt-8">
+                  <h2 className="text-xs font-bold text-white/40 tracking-[0.2em] uppercase mb-6 pl-1">Public Reviews</h2>
+                  <div className="space-y-4">
+                    {reviews.map(rev => (
+                      <div key={rev._id} className="p-6 bg-white/[0.02] rounded-2xl border border-white/[0.04] flex flex-col">
+                        <div className="flex items-center justify-between mb-4">
+                          <div className="flex items-center gap-3">
+                            {rev.consulteeId?.profilePicture ? (
+                              <img src={rev.consulteeId.profilePicture} alt="" className="w-10 h-10 rounded-full object-cover" />
+                            ) : (
+                              <div className="w-10 h-10 rounded-full bg-orange-500/10 text-orange-400 flex items-center justify-center font-bold text-sm border border-orange-500/20">
+                                {rev.consulteeId?.name?.charAt(0) || 'C'}
+                              </div>
+                            )}
+                            <span className="text-sm font-medium text-white">{rev.consulteeId?.name || 'Anonymous User'}</span>
+                          </div>
+                          <div className="flex items-center gap-1.5 bg-yellow-500/10 px-2 py-1 rounded-md border border-yellow-500/20">
+                            <svg className="w-3.5 h-3.5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg> 
+                            <span className="text-yellow-400 text-xs font-bold">{rev.feedback.rating}/5</span>
+                          </div>
+                        </div>
+                        {rev.feedback.comment && <p className="text-white/60 text-sm leading-relaxed">{rev.feedback.comment}</p>}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -150,7 +184,10 @@ const ExpertProfile = () => {
                   {/* Dynamic UPI QR Code UI */}
                   <div className="w-32 h-32 bg-white rounded-lg p-2 flex items-center justify-center shadow-[0_0_20px_rgba(249,115,22,0.2)]">
                     <img src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&bgcolor=ffffff&color=ea580c&data=${encodeURIComponent(`upi://pay?pa=priyanshuattri05@okaxis&pn=ConsultifyPayment&am=${expert.pricingPerSession || 0}&cu=INR`)}`} alt="Payment QR" className="w-full h-full object-contain mix-blend-multiply" />
-                
+                  </div>
+                  <p className="text-white/40 text-xs mt-3 text-center w-full">Scan with any UPI app to pay ₹{expert.pricingPerSession || 0}</p>
+                </div>
+
                 <div>
                   <label className="block text-xs font-medium text-white/50 tracking-wide mb-1.5">Transaction ID / UTI</label>
                   <input 

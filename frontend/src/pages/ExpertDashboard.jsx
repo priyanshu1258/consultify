@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import api from '../api';
 import { useNavigate, Link } from 'react-router-dom';
+import Avatar from '../components/Avatar';
 
 /* ─── SVG Icon set (no emojis) ─────────────────────────────── */
 const Icon = {
@@ -158,7 +159,6 @@ const BookingCard = ({ booking, onAcceptClick, onReject, updating }) => {
   const s = SP[booking.status] || SP.pending;
   const isUpdating = updating === booking._id;
   const name = booking.consulteeId?.name || 'Client';
-  const initials = name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
 
   return (
     <div className="rounded-2xl overflow-hidden transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_8px_32px_rgba(0,0,0,0.4)]"
@@ -171,11 +171,8 @@ const BookingCard = ({ booking, onAcceptClick, onReject, updating }) => {
         {/* Client avatar + status */}
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl overflow-hidden flex items-center justify-center text-xs font-bold flex-shrink-0"
-              style={{ background: 'rgba(249,115,22,0.12)', border: '1px solid rgba(249,115,22,0.2)', color: '#fb923c' }}>
-              {booking.consulteeId?.profilePicture
-                ? <img src={booking.consulteeId.profilePicture} alt="" className="w-full h-full object-cover" />
-                : initials}
+            <div className="w-10 h-10 rounded-xl overflow-hidden shadow-lg border border-orange-500/20 bg-orange-500/10 shrink-0">
+              <Avatar user={booking.consulteeId} />
             </div>
             <div>
               <p className="text-white text-sm font-medium leading-tight">{name}</p>
@@ -236,7 +233,7 @@ const BookingCard = ({ booking, onAcceptClick, onReject, updating }) => {
         )}
 
         {booking.status === 'accepted' && (
-          <Link to={`/call/${booking.meetingLink || 'demo'}`}
+          <Link to={`/call/${booking.meetingLink || 'demo'}/${booking._id}`}
             className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl text-xs font-semibold text-white transition-all hover:brightness-110"
             style={{ background: 'rgba(16,185,129,0.12)', border: '1px solid rgba(16,185,129,0.2)', color: '#6EE7B7' }}>
             {Icon.play} Start Session
@@ -349,14 +346,12 @@ const ProfileTab = ({ user, setUser, stats, glass }) => {
           <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, transparent, rgba(11,12,16,0.8))' }} />
         </div>
         <div className="px-8 pb-8">
-          <div className="flex items-end gap-4 -mt-10 mb-7">
-            <div className="relative w-18 h-18 rounded-2xl overflow-hidden flex items-center justify-center text-xl font-bold border-2 shrink-0 group"
-              style={{ borderColor: '#08080A', background: 'rgba(249,115,22,0.15)', color: '#fb923c', width: 72, height: 72 }}>
-              {(form.profilePicture || user?.profilePicture) ? (
-                <img src={form.profilePicture || user?.profilePicture} alt="" className="w-full h-full object-cover" />
-              ) : (
-                (user?.name || 'E').charAt(0)
-              )}
+          <div className="flex items-end gap-4 -mt-10 mb-7 relative z-10">
+            <div className="relative w-18 h-18 rounded-2xl overflow-hidden border-2 shrink-0 group bg-[#08080A]"
+              style={{ borderColor: '#08080A', width: 72, height: 72 }}>
+              
+              <Avatar user={user} />
+              
               {isEditing && (
                 <label className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity">
                   <span className="text-[10px] text-white/80 font-medium">Upload</span>
@@ -445,6 +440,7 @@ export default function ExpertDashboard() {
   const [activeNav, setActiveNav] = useState('dashboard');
   const [filter, setFilter] = useState('All');
   const [acceptTarget, setAcceptTarget] = useState(null);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -472,8 +468,10 @@ export default function ExpertDashboard() {
         { headers: { Authorization: `Bearer ${user.token}` } });
       setAcceptTarget(null);
       fetchBookings(user);
-    } catch (e) { console.error(e); }
-    finally { setUpdating(null); }
+    } catch (e) { 
+      console.error(e);
+      alert(e.response?.data?.message || e.message || 'Update failed');
+    } finally { setUpdating(null); }
   };
 
   const handleReject = async (id) => {
@@ -513,7 +511,8 @@ export default function ExpertDashboard() {
     }}>
 
       {/* ─────────── SIDEBAR ─────────── */}
-      <aside className="hidden md:flex flex-col w-60 shrink-0 relative" style={{ borderRight: '1px solid rgba(255,255,255,0.05)' }}>
+      <div className={`fixed inset-0 z-40 bg-black/60 backdrop-blur-sm transition-opacity md:hidden ${mobileMenuOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`} onClick={() => setMobileMenuOpen(false)} />
+      <aside className={`fixed md:relative z-50 inset-y-0 left-0 bg-[#08080A] w-64 md:w-60 transform transition-transform duration-300 md:translate-x-0 ${mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} flex flex-col shrink-0`} style={{ borderRight: '1px solid rgba(255,255,255,0.05)' }}>
         {/* subtle top gradient */}
         <div className="absolute inset-0 pointer-events-none" style={{ background: 'linear-gradient(180deg, rgba(249,115,22,0.04) 0%, transparent 40%)' }} />
 
@@ -550,10 +549,8 @@ export default function ExpertDashboard() {
 
         {/* Expert card */}
         <div className="mx-3 mb-5 mt-4 p-4 rounded-2xl" style={{ background: 'rgba(249,115,22,0.06)', border: '1px solid rgba(249,115,22,0.12)' }}>
-          <div className="w-9 h-9 rounded-xl overflow-hidden mb-3 flex items-center justify-center font-bold text-orange-300 text-sm"
-            style={{ background: 'rgba(249,115,22,0.15)', border: '1px solid rgba(249,115,22,0.25)' }}>
-            {user?.profilePicture ? <img src={user.profilePicture} alt="" className="w-full h-full object-cover" />
-              : (user?.name || 'E').charAt(0).toUpperCase()}
+          <div className="w-10 h-10 rounded-xl overflow-hidden mb-3 bg-[#08080A]">
+            <Avatar user={user} />
           </div>
           <p className="text-white text-sm font-medium leading-tight truncate">{user?.name || 'Expert'}</p>
 <p className="text-white/30 text-xs mt-0.5 truncate">{user?.email}</p>
@@ -568,10 +565,13 @@ export default function ExpertDashboard() {
       <div className="flex-1 flex flex-col min-w-0">
 
         {/* Top bar */}
-        <header className="flex items-center justify-between px-6 py-4 shrink-0"
+        <header className="flex items-center justify-between px-4 sm:px-6 py-4 shrink-0"
           style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', background: 'rgba(8,8,10,0.6)', backdropFilter: 'blur(20px)' }}>
-          <div>
-            <p className="text-white/25 text-xs">
+          <div className="flex items-center gap-3">
+            <button onClick={() => setMobileMenuOpen(true)} className="md:hidden text-white/50 hover:text-white p-1">
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+            </button>
+            <p className="text-white/25 text-xs hidden sm:block">
               Expert Portal <span className="text-white/20 mx-1.5">›</span>
               <span className="text-white/50">{activeNav.charAt(0).toUpperCase() + activeNav.slice(1)}</span>
             </p>
@@ -710,9 +710,8 @@ export default function ExpertDashboard() {
                             style={{ borderBottom: idx < 7 ? '1px solid rgba(255,255,255,0.03)' : 'none' }}>
                             <td className="px-6 py-4">
                               <div className="flex items-center gap-2.5">
-                                <div className="w-7 h-7 rounded-lg overflow-hidden flex items-center justify-center text-[11px] font-bold"
-                                  style={{ background: 'rgba(249,115,22,0.1)', border: '1px solid rgba(249,115,22,0.15)', color: '#fb923c' }}>
-                                  {(b.consulteeId?.name || 'C').charAt(0).toUpperCase()}
+                                <div className="w-8 h-8 rounded-lg overflow-hidden bg-white/5 border border-white/10 shrink-0">
+                                  <Avatar user={b.consulteeId} />
                                 </div>
                                 <span className="text-white/70 text-sm">{b.consulteeId?.name || '—'}</span>
                               </div>
@@ -735,7 +734,7 @@ export default function ExpertDashboard() {
                                   </button>
                                 </div>
                               ) : b.status === 'accepted' ? (
-                                <Link to={`/call/${b.meetingLink || 'demo'}`}
+                                <Link to={`/call/${b.meetingLink || 'demo'}/${b._id}`}
                                   className="px-3 py-1.5 rounded-lg text-xs font-semibold inline-flex items-center gap-1.5 transition-all hover:brightness-110"
                                   style={{ background: 'rgba(16,185,129,0.12)', border: '1px solid rgba(16,185,129,0.2)', color: '#6EE7B7' }}>
                                   {Icon.play} Start

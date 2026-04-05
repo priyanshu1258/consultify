@@ -21,6 +21,10 @@ const ICONS = {
   check:     'M22 11.08V12a10 10 0 11-5.93-9.14 M22 4L12 14.01l-3-3',
   trash:     'M3 6h18 M19 6l-1 14H6L5 6 M9 6V4h6v2 M10 11v6 M14 11v6',
   shield:    'M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z',
+  doc:       'M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z M14 2v6h6 M16 13H8 M16 17H8 M10 9H8',
+  close:     'M18 6L6 18 M6 6l12 12',
+  download:  'M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4 M7 10l5 5 5-5 M12 15V3',
+  image:     'M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z',
 };
 
 /* ─── Nav config ─────────────────────────────────────────────────────── */
@@ -102,9 +106,144 @@ const TabDashboard = ({ stats, loading }) => {
 };
 
 /* ═══════════════════════════════════════════════════════════════════════
+   DOCUMENT VIEWER PANEL
+═══════════════════════════════════════════════════════════════════════ */
+const DocViewerPanel = ({ expert, onClose }) => {
+  const [previewDoc, setPreviewDoc] = useState(null);
+  const [docs, setDocs] = useState([]);
+  const [fetchLoading, setFetchLoading] = useState(true);
+  const [fetchError, setFetchError] = useState('');
+
+  useEffect(() => {
+    const load = async () => {
+      setFetchLoading(true);
+      setFetchError('');
+      try {
+        const res = await api.get(`/api/admin/users/${expert._id}/documents`);
+        setDocs(res.data.expertDocuments || []);
+      } catch (e) {
+        setFetchError('Failed to load documents.');
+      } finally {
+        setFetchLoading(false);
+      }
+    };
+    load();
+  }, [expert._id]);
+
+  const downloadDoc = (doc) => {
+    const a = document.createElement('a');
+    a.href = doc.data;
+    a.download = doc.name;
+    a.click();
+  };
+
+  return (
+    <div className="fixed inset-0 z-[1100] flex" style={{ background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(8px)' }}
+      onClick={onClose}>
+      <div className="ml-auto w-full max-w-lg h-full bg-[#0e1019] border-l border-white/[0.07] flex flex-col shadow-2xl"
+        onClick={e => e.stopPropagation()}>
+
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-5 border-b border-white/[0.06]">
+          <div>
+            <h3 className="text-white font-semibold text-base">{expert.name}'s Documents</h3>
+            <p className="text-white/40 text-xs mt-0.5">
+              {fetchLoading ? 'Loading…' : `${docs.length} document${docs.length !== 1 ? 's' : ''} uploaded`}
+            </p>
+          </div>
+          <button onClick={onClose}
+            className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center text-white/50 hover:text-white transition-all">
+            <Icon d={ICONS.close} size={14} />
+          </button>
+        </div>
+
+        {/* Content */}
+        <div className="flex-1 overflow-y-auto p-6">
+          {fetchLoading ? (
+            <div className="flex flex-col items-center justify-center h-48 gap-3">
+              <div className="w-8 h-8 border-2 border-white/10 border-t-orange-400 rounded-full animate-spin" />
+              <p className="text-white/30 text-sm">Loading documents…</p>
+            </div>
+          ) : fetchError ? (
+            <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-4 text-red-400 text-sm text-center">
+              {fetchError}
+            </div>
+          ) : docs.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-48 gap-3">
+              <div className="w-14 h-14 rounded-2xl bg-white/5 flex items-center justify-center text-white/20">
+                <Icon d={ICONS.doc} size={24} />
+              </div>
+              <p className="text-white/30 text-sm">No documents uploaded</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {docs.map((doc, i) => {
+                const isPdf = doc.type === 'application/pdf';
+                const isImg = doc.type?.startsWith('image/');
+                return (
+                  <div key={i} className="bg-[#13151e] border border-white/[0.06] rounded-xl overflow-hidden">
+                    {/* Doc row */}
+                    <div className="flex items-center gap-3 p-4">
+                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
+                        isPdf ? 'bg-red-500/15 text-red-400' : 'bg-blue-500/15 text-blue-400'
+                      }`}>
+                        <Icon d={isPdf ? ICONS.doc : ICONS.image} size={18} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-white/85 text-sm font-medium truncate">{doc.name}</p>
+                        <p className="text-white/35 text-xs mt-0.5">
+                          {doc.type} &middot; {doc.data ? `${Math.round(doc.data.length * 0.75 / 1024)} KB` : 'Size N/A'}
+                        </p>
+                      </div>
+                      <div className="flex gap-2 shrink-0">
+                        {isImg && (
+                          <button
+                            onClick={() => setPreviewDoc(previewDoc === i ? null : i)}
+                            className="px-2.5 py-1 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 text-xs font-medium transition-colors border border-blue-500/20">
+                            {previewDoc === i ? 'Hide' : 'Preview'}
+                          </button>
+                        )}
+                        <button
+                          onClick={() => downloadDoc(doc)}
+                          className="px-2.5 py-1 rounded-lg bg-orange-500/10 hover:bg-orange-500/20 text-orange-400 text-xs font-medium transition-colors border border-orange-500/20 flex items-center gap-1">
+                          <Icon d={ICONS.download} size={11} /> Download
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Image preview inline */}
+                    {isImg && previewDoc === i && doc.data && (
+                      <div className="px-4 pb-4">
+                        <img
+                          src={doc.data}
+                          alt={doc.name}
+                          className="w-full rounded-xl object-contain max-h-72 border border-white/[0.06] bg-black/20"
+                        />
+                      </div>
+                    )}
+
+                    {/* PDF hint */}
+                    {isPdf && (
+                      <div className="px-4 pb-3">
+                        <p className="text-white/25 text-xs italic">PDF — click Download to open</p>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+/* ═══════════════════════════════════════════════════════════════════════
    TAB: USERS TABLE (reusable)
 ═══════════════════════════════════════════════════════════════════════ */
 const UsersTable = ({ users, onDelete, role, loading }) => {
+  const [docExpert, setDocExpert] = useState(null); // expert whose docs to view
   const filtered = users.filter(u => u.role === role);
   return (
     <div className="space-y-4">
@@ -119,8 +258,8 @@ const UsersTable = ({ users, onDelete, role, loading }) => {
           <table className="w-full text-left text-sm">
             <thead>
               <tr className="border-b border-white/[0.06]">
-                {['User', 'Contact', 'Gender', 'Role', ''].map(h => (
-                  <th key={h} className="px-5 py-3.5 text-[11px] font-semibold text-white/30 uppercase tracking-wider">{h}</th>
+                {['User', 'Contact', 'Gender', 'Role', role === 'expert' ? 'Docs' : '', ''].map((h, i) => (
+                  <th key={i} className="px-5 py-3.5 text-[11px] font-semibold text-white/30 uppercase tracking-wider">{h}</th>
                 ))}
               </tr>
             </thead>
@@ -128,14 +267,14 @@ const UsersTable = ({ users, onDelete, role, loading }) => {
               {loading ? (
                 [...Array(3)].map((_, i) => (
                   <tr key={i}>
-                    {[...Array(5)].map((_, j) => (
+                    {[...Array(6)].map((_, j) => (
                       <td key={j} className="px-5 py-4"><div className="h-3 bg-white/5 rounded animate-pulse w-24" /></td>
                     ))}
                   </tr>
                 ))
               ) : filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-5 py-14 text-center text-white/25 text-sm">No {role}s found.</td>
+                  <td colSpan={6} className="px-5 py-14 text-center text-white/25 text-sm">No {role}s found.</td>
                 </tr>
               ) : filtered.map(u => (
                 <tr key={u._id} className="hover:bg-white/[0.02] transition-colors group">
@@ -153,6 +292,22 @@ const UsersTable = ({ users, onDelete, role, loading }) => {
                   </td>
                   <td className="px-5 py-3.5 text-white/50 text-xs">{u.gender || '—'}</td>
                   <td className="px-5 py-3.5"><RoleBadge role={u.role} /></td>
+                  {role === 'expert' && (
+                    <td className="px-5 py-3.5">
+                      <button
+                        onClick={() => setDocExpert(u)}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
+                        style={{
+                          background: u.expertDocuments?.length > 0 ? 'rgba(249,115,22,0.1)' : 'rgba(255,255,255,0.04)',
+                          border: u.expertDocuments?.length > 0 ? '1px solid rgba(249,115,22,0.25)' : '1px solid rgba(255,255,255,0.08)',
+                          color: u.expertDocuments?.length > 0 ? '#fb923c' : 'rgba(255,255,255,0.25)',
+                        }}
+                      >
+                        <Icon d={ICONS.doc} size={11} />
+                        {u.expertDocuments?.length > 0 ? `${u.expertDocuments.length} Doc${u.expertDocuments.length > 1 ? 's' : ''}` : 'No Docs'}
+                      </button>
+                    </td>
+                  )}
                   <td className="px-5 py-3.5 text-right">
                     <button
                       onClick={() => onDelete(u._id, u.name)}
@@ -167,6 +322,9 @@ const UsersTable = ({ users, onDelete, role, loading }) => {
           </table>
         </div>
       </div>
+
+      {/* Doc viewer panel */}
+      {docExpert && <DocViewerPanel expert={docExpert} onClose={() => setDocExpert(null)} />}
     </div>
   );
 };

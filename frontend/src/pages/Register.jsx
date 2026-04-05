@@ -291,8 +291,8 @@ const Register = () => {
     if (!files.length) return;
     setDocError('');
 
-    const MIN = 50 * 1024;       // 50 KB
-    const MAX = 5 * 1024 * 1024; // 5 MB
+    const MIN = 50 * 1024;         // 50 KB
+    const MAX = 1000 * 1024;      // 1000 KB
     const PDF_LIMIT = 2;
     const IMG_LIMIT = 3;
     const allowed = ['application/pdf', 'image/jpeg', 'image/png', 'image/jpg', 'image/webp'];
@@ -317,7 +317,7 @@ const Register = () => {
         return;
       }
       if (file.size > MAX) {
-        setDocError(`"${file.name}" is too large (max 5 MB). Yours: ${(file.size/1024/1024).toFixed(2)} MB`);
+        setDocError(`"${file.name}" is too large (max 1000 KB). Yours: ${(file.size/1024).toFixed(0)} KB`);
         e.target.value = '';
         return;
       }
@@ -593,8 +593,8 @@ const Register = () => {
                   {/* ── Document Upload ───────────────────────── */}
                   <div className="mt-2">
                     <label className="block text-xs font-medium text-white/50 tracking-wide mb-2">
-                      Proof of Expertise
-                      <span className="ml-1.5 text-white/25 font-normal">(Resume, CV, Degree — PDF or image, 50 KB–5 MB each)</span>
+                        Proof of Expertise
+                        <span className="ml-1.5 text-white/25 font-normal">(Resume, CV, Degree — PDF or image, 50 KB–1000 KB each)</span>
                     </label>
 
                     {/* Drop zone */}

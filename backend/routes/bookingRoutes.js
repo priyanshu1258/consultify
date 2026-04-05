@@ -50,10 +50,14 @@ router.get("/", protect, async (req, res) => {
 // Body: { status, proposedDate?, proposedTime?, note? }
 router.put("/:id/status", protect, async (req, res) => {
   try {
+    console.log(`[BookingStatus] id=${req.params.id} user=${req.user?._id} body=`, req.body);
     const booking = await Booking.findById(req.params.id);
     if (!booking) return res.status(404).json({ message: "Booking not found" });
 
+    console.log(`[BookingStatus] booking.expertId=${booking.expertId} req.user._id=${req.user._id}`);
+
     if (booking.expertId.toString() !== req.user._id.toString()) {
+      console.log(`[BookingStatus] UNAUTHORIZED: expertId mismatch`);
       return res
         .status(401)
         .json({ message: "Not authorised to update this booking" });
@@ -69,7 +73,54 @@ router.put("/:id/status", protect, async (req, res) => {
     }
 
     const updated = await booking.save();
+    console.log(`[BookingStatus] Updated successfully: ${updated._id} status=${updated.status}`);
     res.json(updated);
+  } catch (error) {
+    console.error(`[BookingStatus] ERROR:`, error);
+    res.status(500).json({ message: error.message });
+  }
+});
+
+// POST /api/bookings/:id/feedback — Submit feedback
+router.post("/:id/feedback", protect, async (req, res) => {
+  try {
+    const booking = await Booking.findById(req.params.id);
+    if (!booking) return res.status(404).json({ message: "Booking not found" });
+
+    if (booking.consulteeId.toString() !== req.user._id.toString()) {
+      return res.status(401).json({ message: "Not authorised to rate this session" });
+    }
+
+    if (booking.status !== "completed") {
+      return res.status(400).json({ message: "Can only rate completed sessions" });
+    }
+
+    if (booking.feedback && booking.feedback.rating) {
+      return res.status(400).json({ message: "Feedback already submitted for this session" });
+    }
+
+    const { rating, comment } = req.body;
+    
+    // Update booking
+    booking.feedback = {
+      rating: Number(rating),
+      comment,
+      submittedAt: new Date()
+    };
+    await booking.save();
+
+    // Update expert average rating
+    const User = require("../models/User");
+    const expert = await User.findById(booking.expertId);
+    if (expert) {
+      const newReviewCount = expert.reviewCount + 1;
+      const newRating = ((expert.rating * expert.reviewCount) + Number(rating)) / newReviewCount;
+      expert.rating = newRating;
+      expert.reviewCount = newReviewCount;
+      await expert.save();
+    }
+
+    res.json(booking);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

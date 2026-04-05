@@ -7,8 +7,8 @@ const Navbar = () => {
   const user = JSON.parse(localStorage.getItem('userInfo'));
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  // Expert dashboard has its own built-in sidebar + topbar — hide the global Navbar there
-  if (pathname === '/expert-dashboard') return null;
+  // Detailed dashboards have their own built-in sidebar + topbar — hide the global Navbar there
+  if (['/expert-dashboard', '/consultee-dashboard', '/admin-dashboard'].includes(pathname)) return null;
 
   const logoutHandler = () => {
     localStorage.removeItem('userInfo');

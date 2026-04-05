@@ -22,6 +22,18 @@ router.get("/users", async (req, res) => {
   }
 });
 
+// @route   GET /api/admin/users/:id/documents
+// @desc    Get full expert documents (including base64 data) for admin review
+router.get("/users/:id/documents", async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id).select("name expertDocuments");
+    if (!user) return res.status(404).json({ message: "User not found" });
+    res.json({ name: user.name, expertDocuments: user.expertDocuments || [] });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
 // @route   DELETE /api/admin/users/:id
 // @desc    Delete a user
 router.delete("/users/:id", async (req, res) => {

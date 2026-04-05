@@ -23,7 +23,9 @@ const userSchema = new mongoose.Schema({
     name: { type: String },
     type: { type: String }, // 'application/pdf' or image MIME
     data: { type: String }  // base64 data URL
-  }]
+  }],
+  rating: { type: Number, default: 0 },
+  reviewCount: { type: Number, default: 0 }
 }, { timestamps: true });
 
 // Hash password before saving

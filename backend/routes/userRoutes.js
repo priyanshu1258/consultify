@@ -68,4 +68,23 @@ router.put("/profile", protect, async (req, res) => {
   }
 });
 
+// @route   GET /api/users/experts/:id/reviews
+// @desc    Get expert public reviews
+router.get("/experts/:id/reviews", async (req, res) => {
+  try {
+    const Booking = require("../models/Booking");
+    const reviews = await Booking.find({ 
+      expertId: req.params.id, 
+      "feedback.rating": { $exists: true } 
+    })
+    .populate("consulteeId", "name profilePicture")
+    .select("feedback consulteeId")
+    .sort({ "feedback.submittedAt": -1 });
+
+    res.json(reviews);
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+});
+
 module.exports = router;
