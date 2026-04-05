@@ -3,9 +3,10 @@ import api from '../api';
 import { useNavigate, Link } from 'react-router-dom';
 
 const STATUS_COLORS = {
-  accepted: { bg: 'bg-emerald-500/20', text: 'text-emerald-300', border: 'border-emerald-500/30', dot: 'bg-emerald-400' },
-  rejected: { bg: 'bg-red-500/20', text: 'text-red-300', border: 'border-red-500/30', dot: 'bg-red-400' },
-  pending:  { bg: 'bg-amber-500/20', text: 'text-amber-300', border: 'border-amber-500/30', dot: 'bg-amber-400' },
+  accepted: { bg: 'bg-emerald-500/20', text: 'text-emerald-300', border: 'border-emerald-500/30', dot: 'bg-emerald-400', label: 'Accepted' },
+  rejected: { bg: 'bg-red-500/20', text: 'text-red-300', border: 'border-red-500/30', dot: 'bg-red-400', label: 'Rejected' },
+  pending:  { bg: 'bg-yellow-500/20', text: 'text-yellow-300', border: 'border-yellow-500/30', dot: 'bg-yellow-400', label: 'Pending Expert' },
+  pending_admin: { bg: 'bg-orange-500/20', text: 'text-orange-300', border: 'border-orange-500/30', dot: 'bg-orange-400', label: 'Awaiting Payment' },
 };
 
 const StatCard = ({ label, value, icon, color }) => (
@@ -136,11 +137,15 @@ const ConsulteeDashboard = () => {
                     </div>
 
                     {/* Status & Action */}
-                    <div className="flex items-center gap-3 flex-shrink-0">
-                      <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium border ${sc.bg} ${sc.text} ${sc.border}`}>
+                    <div className="flex flex-col items-end gap-3 flex-shrink-0">
+                      <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] uppercase tracking-widest font-semibold border ${sc.bg} ${sc.text} ${sc.border}`}>
                         <span className={`w-1.5 h-1.5 rounded-full ${sc.dot}`} />
-                        {booking.status.charAt(0).toUpperCase() + booking.status.slice(1)}
+                        {sc.label || booking.status}
                       </span>
+                      {booking.transactionId && (
+                        <p className="text-[10px] text-white/30 font-mono tracking-wider">UTI: {booking.transactionId}</p>
+                      )}
+                      
                       {booking.status === 'accepted' && (
                         <Link
                           to={`/call/${booking.meetingLink || 'demo-room'}`}

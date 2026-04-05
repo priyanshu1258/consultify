@@ -7,6 +7,7 @@ const ExpertProfile = () => {
   const [expert, setExpert] = useState(null);
   const [date, setDate] = useState('');
   const [time, setTime] = useState('');
+  const [transactionId, setTransactionId] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -39,75 +40,141 @@ const ExpertProfile = () => {
       const config = {
         headers: { Authorization: `Bearer ${userInfo.token}` }
       };
-      await api.post('/api/bookings', { expertId: id, date, time }, config);
-      setSuccess('Booking request sent successfully!');
+      await api.post('/api/bookings', { expertId: id, date, time, transactionId }, config);
+      setSuccess('Booking request sent successfully and is pending admin payment verification!');
       setDate('');
       setTime('');
+      setTransactionId('');
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to book session');
     }
   };
 
-  if (loading) return <div>Loading...</div>;
-  if (error || !expert) return <div className="text-red-500">{error || 'Expert not found'}</div>;
+  if (loading) return (
+    <div className="min-h-screen bg-[#08080A] flex justify-center items-center">
+      <p className="text-white/50 animate-pulse text-lg tracking-widest font-mono">LOADING...</p>
+    </div>
+  );
+  if (error || !expert) return (
+    <div className="min-h-screen bg-[#08080A] flex justify-center items-center">
+      <div className="text-red-400 bg-red-500/10 border border-red-500/30 p-4 rounded-xl">{error || 'Expert not found'}</div>
+    </div>
+  );
 
   return (
-    <div className="max-w-4xl mx-auto mt-32 px-4 pb-12 grid grid-cols-1 md:grid-cols-3 gap-8">
-      <div className="md:col-span-2 space-y-6">
-        <div className="bg-white p-8 border rounded-xl shadow-sm">
-          <div className="flex items-center space-x-4 mb-6">
-            <div className="w-20 h-20 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-3xl font-bold">
-              {expert.name.charAt(0)}
-            </div>
-            <div>
-              <h1 className="text-3xl font-bold">{expert.name}</h1>
-              <p className="text-gray-500 text-lg">${expert.pricingPerSession || 0} / session</p>
-            </div>
-          </div>
-          
-          <h2 className="text-xl font-semibold mb-2">About me</h2>
-          <p className="text-gray-700 whitespace-pre-wrap">{expert.bio || 'No bio provided.'}</p>
-
-          <h2 className="text-xl font-semibold mt-6 mb-2">Skills</h2>
-          <div className="flex flex-wrap gap-2">
-            {expert.skills?.map(skill => (
-               <span key={skill} className="bg-gray-100 text-gray-700 px-3 py-1 rounded">
-                 {skill}
-               </span>
-            ))}
-          </div>
-        </div>
+    <div className="min-h-screen bg-[#08080A] text-white pt-32 pb-20 relative overflow-hidden">
+      {/* Background Soft Arc Glow Component */}
+      <div className="absolute top-0 right-1/4 -translate-y-1/4 w-[800px] h-[800px] pointer-events-none z-0">
+          <svg viewBox="0 0 800 800" className="w-full h-full opacity-30 blur-[80px]">
+            <circle cx="400" cy="400" r="300" fill="transparent" stroke="#ea580c" strokeWidth="60" />
+            <circle cx="400" cy="400" r="200" fill="#c2410c" opacity="0.3" filter="blur(40px)" />
+          </svg>
       </div>
 
-      <div className="md:col-span-1">
-        <div className="bg-white p-6 border rounded-xl shadow-sm sticky top-6">
-          <h2 className="text-xl font-semibold mb-4">Book a Session</h2>
-          {success && <div className="bg-green-100 text-green-700 p-3 rounded mb-4 text-sm">{success}</div>}
-          <form onSubmit={handleBookSession} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Date</label>
-              <input 
-                type="date" 
-                required 
-                className="mt-1 w-full p-2 border rounded-md" 
-                value={date} 
-                onChange={(e) => setDate(e.target.value)} 
-              />
+      <div className="max-w-6xl mx-auto px-4 relative z-10 grid grid-cols-1 lg:grid-cols-3 gap-8">
+        
+        {/* Left Column: Profile Info */}
+        <div className="lg:col-span-2 space-y-6">
+          <div className="bg-[#0F1014]/90 backdrop-blur-xl border border-white/[0.08] shadow-2xl rounded-3xl overflow-hidden relative">
+            <div className="h-32 relative" style={{ background: 'linear-gradient(135deg, rgba(249,115,22,0.15), rgba(234,88,12,0.05))' }}>
+              <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, transparent, rgba(15,16,20,0.9))' }} />
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700">Time</label>
-              <input 
-                type="time" 
-                required 
-                className="mt-1 w-full p-2 border rounded-md" 
-                value={time} 
-                onChange={(e) => setTime(e.target.value)} 
-              />
+            
+            <div className="p-8 pt-0">
+              <div className="flex items-end gap-6 -mt-12 mb-8 pb-8 border-b border-white/5">
+                <div className="relative">
+                  {expert.profilePicture ? (
+                    <img src={expert.profilePicture} alt={expert.name} className="w-28 h-28 rounded-2xl object-cover border-4 border-[#0F1014] shadow-[0_0_25px_rgba(249,115,22,0.2)]" />
+                  ) : (
+                    <div className="w-28 h-28 bg-gradient-to-br from-orange-400/20 to-orange-600/20 text-orange-400 border-4 border-[#0F1014] rounded-2xl flex items-center justify-center text-4xl font-bold shadow-[0_0_25px_rgba(249,115,22,0.2)]">
+                      {expert.name.charAt(0)}
+                    </div>
+                  )}
+                  <span className="absolute -bottom-2 -right-2 px-3 py-1 bg-white/5 backdrop-blur-md rounded-full border border-white/10 text-orange-400 text-xs font-semibold shadow-lg">Verified</span>
+                </div>
+                
+                <div className="pb-1">
+                  <h1 className="text-3xl font-bold text-white tracking-tight">{expert.name}</h1>
+                  <p className="text-orange-400/90 font-semibold text-lg mt-1 tracking-wide">${expert.pricingPerSession || 0} <span className="text-white/30 font-normal text-sm">/ session</span></p>
+                </div>
+              </div>
+
+              <h2 className="text-xs font-bold text-white/40 tracking-[0.2em] uppercase mb-4 pl-1">About</h2>
+              <p className="text-white/70 whitespace-pre-wrap leading-relaxed text-[15px] p-5 bg-white/[0.02] rounded-2xl border border-white/[0.04]">{expert.bio || 'No bio provided for this expert.'}</p>
+
+              <h2 className="text-xs font-bold text-white/40 tracking-[0.2em] uppercase mt-8 mb-4 pl-1">Skills & Expertise</h2>
+              <div className="flex flex-wrap gap-2.5">
+                {expert.skills?.map(skill => (
+                  <span key={skill} className="bg-white/5 border border-white/10 text-white/80 px-3.5 py-1.5 rounded-full text-sm tracking-wide">
+                    {skill}
+                  </span>
+                ))}
+              </div>
             </div>
-            <button type="submit" className="w-full bg-blue-600 text-white p-3 rounded-md hover:bg-blue-700 transition font-medium">
-              Request Booking
-            </button>
-          </form>
+          </div>
+        </div>
+
+        {/* Right Column: Booking Form */}
+        <div className="lg:col-span-1">
+          <div className="bg-[#0F1014]/90 backdrop-blur-xl p-8 border border-white/[0.08] shadow-2xl rounded-3xl sticky top-32">
+            <h2 className="text-xl font-medium text-white mb-6">Book a Session</h2>
+            
+            {success && <div className="bg-green-500/10 border border-green-500/30 text-green-400 p-3 rounded-lg mb-6 text-sm tracking-wide">{success}</div>}
+            
+            <form onSubmit={handleBookSession} className="space-y-5">
+              <div>
+                <label className="block text-xs font-medium text-white/50 tracking-wide mb-1.5">Date</label>
+                <input 
+                  type="date" 
+                  required 
+                  className="w-full p-3.5 bg-[#16171C] border border-white/5 rounded-xl text-white outline-none focus:border-orange-500/50 focus:bg-[#1A1C23] focus:ring-1 focus:ring-orange-500/20 transition-all text-sm [color-scheme:dark]" 
+                  value={date} 
+                  onChange={(e) => setDate(e.target.value)} 
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-white/50 tracking-wide mb-1.5">Time</label>
+                <input 
+                  type="time" 
+                  required 
+                  className="w-full p-3.5 bg-[#16171C] border border-white/5 rounded-xl text-white outline-none focus:border-orange-500/50 focus:bg-[#1A1C23] focus:ring-1 focus:ring-orange-500/20 transition-all text-sm [color-scheme:dark]" 
+                  value={time} 
+                  onChange={(e) => setTime(e.target.value)} 
+                />
+              </div>
+
+              {/* Payment Section */}
+              <div className="mt-6 pt-6 border-t border-white/5">
+                <p className="text-white/80 font-medium text-sm mb-4">Complete Payment to Book</p>
+                <div className="bg-white/5 border border-white/10 rounded-2xl p-6 flex flex-col items-center justify-center mb-4">
+                  {/* Dummy QR Code UI */}
+                  <div className="w-32 h-32 bg-white rounded-lg p-2 flex items-center justify-center shadow-[0_0_20px_rgba(249,115,22,0.2)]">
+                    <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=ConsultifyPayment&bgcolor=ffffff&color=ea580c" alt="Payment QR" className="w-full h-full object-contain mix-blend-multiply" />
+                  </div>
+                  <p className="text-white/60 text-xs mt-4 text-center">Scan to pay <span className="text-orange-400 font-semibold">${expert.pricingPerSession || 0}</span> for this session.</p>
+                </div>
+                
+                <div>
+                  <label className="block text-xs font-medium text-white/50 tracking-wide mb-1.5">Transaction ID / UTI</label>
+                  <input 
+                    type="text" 
+                    required 
+                    placeholder="Enter UTI after payment"
+                    className="w-full p-3.5 bg-[#16171C] border border-white/5 rounded-xl text-white outline-none focus:border-orange-500/50 focus:bg-[#1A1C23] focus:ring-1 focus:ring-orange-500/20 transition-all text-sm placeholder:text-white/20" 
+                    value={transactionId} 
+                    onChange={(e) => setTransactionId(e.target.value)} 
+                  />
+                </div>
+              </div>
+
+              <button 
+                type="submit" 
+                className="w-full bg-gradient-to-r from-orange-400 to-orange-600 shadow-[0_0_20px_rgba(249,115,22,0.3)] hover:shadow-[0_0_25px_rgba(249,115,22,0.5)] border border-orange-400/50 text-white font-semibold py-3.5 rounded-xl hover:brightness-110 transition-all mt-4 text-sm tracking-wide"
+              >
+                Submit Request
+              </button>
+            </form>
+          </div>
         </div>
       </div>
     </div>

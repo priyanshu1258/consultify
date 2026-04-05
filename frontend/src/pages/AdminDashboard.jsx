@@ -174,7 +174,21 @@ const UsersTable = ({ users, onDelete, role, loading }) => {
 /* ═══════════════════════════════════════════════════════════════════════
    TAB: BOOKINGS
 ═══════════════════════════════════════════════════════════════════════ */
-const TabBookings = ({ bookings, loading }) => (
+const TabBookings = ({ bookings, loading, fetchBookings }) => {
+  const handleApprove = async (id) => {
+    try {
+      const userInfo = JSON.parse(localStorage.getItem('userInfo'));
+      await api.put(`/api/admin/bookings/${id}/approve`, {}, {
+        headers: { Authorization: `Bearer ${userInfo.token}` }
+      });
+      fetchBookings(); // Refresh the list
+    } catch (error) {
+      console.error('Failed to approve booking', error);
+      alert('Failed to approve payment');
+    }
+  };
+
+  return (
   <div className="space-y-4">
     <div>
       <h2 className="text-white text-xl font-semibold mb-0.5">All Bookings</h2>
@@ -185,7 +199,7 @@ const TabBookings = ({ bookings, loading }) => (
         <table className="w-full text-left text-sm">
           <thead>
             <tr className="border-b border-white/[0.06]">
-              {['Consultee', 'Expert', 'Status', 'Date'].map(h => (
+              {['Consultee', 'Expert', 'Payment UTI', 'Status', 'Date', 'Action'].map(h => (
                 <th key={h} className="px-5 py-3.5 text-[11px] font-semibold text-white/30 uppercase tracking-wider">{h}</th>
               ))}
             </tr>
@@ -194,33 +208,45 @@ const TabBookings = ({ bookings, loading }) => (
             {loading ? (
               [...Array(4)].map((_, i) => (
                 <tr key={i}>
-                  {[...Array(4)].map((_, j) => (
+                  {[...Array(6)].map((_, j) => (
                     <td key={j} className="px-5 py-4"><div className="h-3 bg-white/5 rounded animate-pulse w-28" /></td>
                   ))}
                 </tr>
               ))
             ) : bookings.length === 0 ? (
               <tr>
-                <td colSpan={4} className="px-5 py-14 text-center text-white/25 text-sm">No bookings yet.</td>
+                <td colSpan={6} className="px-5 py-14 text-center text-white/25 text-sm">No bookings yet.</td>
               </tr>
             ) : bookings.map(b => {
               const statusCfg = {
+                pending_admin: 'bg-orange-500/10 text-orange-400 border-orange-500/20',
                 pending:   'bg-yellow-500/10 text-yellow-400 border-yellow-500/20',
-                confirmed: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
-                cancelled: 'bg-red-500/10 text-red-400 border-red-500/20',
+                accepted: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
+                rejected: 'bg-red-500/10 text-red-400 border-red-500/20',
                 completed: 'bg-sky-500/10 text-sky-400 border-sky-500/20',
               };
               return (
                 <tr key={b._id} className="hover:bg-white/[0.02] transition-colors">
                   <td className="px-5 py-3.5 text-white/75">{b.consulteeId?.name || '—'}</td>
                   <td className="px-5 py-3.5 text-white/75">{b.expertId?.name || '—'}</td>
+                  <td className="px-5 py-3.5 text-white/75 font-mono text-xs tracking-wider">{b.transactionId || 'N/A'}</td>
                   <td className="px-5 py-3.5">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-medium border ${statusCfg[b.status] || statusCfg.pending}`}>
-                      {b.status}
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] uppercase tracking-wider font-semibold border ${statusCfg[b.status] || statusCfg.pending}`}>
+                      {b.status === 'pending_admin' ? 'Awaiting Payment' : b.status}
                     </span>
                   </td>
                   <td className="px-5 py-3.5 text-white/45 text-xs">
                     {b.createdAt ? new Date(b.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}
+                  </td>
+                  <td className="px-5 py-3.5">
+                    {b.status === 'pending_admin' && (
+                      <button
+                        onClick={() => handleApprove(b._id)}
+                        className="bg-emerald-500/20 hover:bg-emerald-500/40 text-emerald-400 border border-emerald-500/30 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
+                      >
+                        Verify Payment
+                      </button>
+                    )}
                   </td>
                 </tr>
               );
@@ -230,7 +256,7 @@ const TabBookings = ({ bookings, loading }) => (
       </div>
     </div>
   </div>
-);
+)};
 
 /* ═══════════════════════════════════════════════════════════════════════
    TAB: WHATSAPP  (live QR polling)
@@ -414,7 +440,7 @@ const AdminDashboard = () => {
 
       // Try to fetch bookings (may not exist yet)
       try {
-        const bookRes = await api.get('/api/bookings/admin/all');
+        const bookRes = await api.get('/api/admin/bookings');
         setBookings(bookRes.data);
       } catch { /* bookings endpoint may not exist */ }
     } catch (err) {
@@ -530,7 +556,7 @@ const AdminDashboard = () => {
             <UsersTable users={users} onDelete={handleDelete} role="expert" loading={loading} />
           )}
           {activeTab === 'bookings' && (
-            <TabBookings bookings={bookings} loading={loading} />
+            <TabBookings bookings={bookings} loading={loading} fetchBookings={fetchData} />
           )}
           {activeTab === 'whatsapp' && (
             <TabWhatsApp />

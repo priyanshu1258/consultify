@@ -197,6 +197,16 @@ const BookingCard = ({ booking, onAcceptClick, onReject, updating }) => {
           </div>
         </div>
 
+        {/* Transaction ID */}
+        {booking.transactionId && (
+          <div className="mb-4">
+             <p className="text-[10px] text-white/20 uppercase tracking-widest mb-1.5">Payment Verified By Admin</p>
+             <div className="text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 rounded-lg px-3 py-1.5 text-xs font-mono tracking-wider flex items-center gap-2 w-max">
+               {Icon.check} UTI: {booking.transactionId}
+             </div>
+          </div>
+        )}
+
         {/* Confirmed slot */}
         {booking.status === 'accepted' && booking.proposedDate && (
           <div className="mb-4 p-3 rounded-xl"
@@ -268,6 +278,161 @@ const StatCard = ({ label, value, sub, color, barData, icon }) => (
     {barData && <BarSpark data={barData} color={color} height={40} />}
   </div>
 );
+
+/* ═══════════════════════════════════════════════════════════════
+   PROFILE TAB COMPONENT
+═══════════════════════════════════════════════════════════════ */
+const ProfileTab = ({ user, setUser, stats, glass }) => {
+  const [isEditing, setIsEditing] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [form, setForm] = useState({
+    name: user?.name || '',
+    bio: user?.bio || '',
+    skills: user?.skills?.join(', ') || '',
+    profilePicture: user?.profilePicture || ''
+  });
+
+  const handleImageUpload = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      if (file.size > 2 * 1024 * 1024) {
+        alert("Image must be smaller than 2MB");
+        return;
+      }
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setForm({ ...form, profilePicture: reader.result });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleSave = async () => {
+    setLoading(true);
+    try {
+      const skillsArray = form.skills.split(',').map(s => s.trim()).filter(Boolean);
+      const res = await api.put('/api/users/profile', {
+        name: form.name,
+        bio: form.bio,
+        skills: skillsArray,
+        profilePicture: form.profilePicture
+      }, { headers: { Authorization: `Bearer ${user.token}` } });
+      const updatedUser = { ...user, ...res.data };
+      localStorage.setItem('userInfo', JSON.stringify(updatedUser));
+      setUser(updatedUser);
+      setIsEditing(false);
+    } catch (e) {
+      console.error(e);
+      alert('Failed to update profile');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const inputCls = 'w-full bg-[#0b0c10]/70 backdrop-blur-sm border border-white/[0.08] rounded-xl px-4 py-3 text-white text-sm outline-none focus:border-orange-500/40 focus:ring-1 focus:ring-orange-500/10 transition-all placeholder:text-white/15';
+
+  return (
+    <div className="max-w-2xl">
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-2xl font-semibold text-white tracking-tight">Expert Profile</h2>
+        {!isEditing && (
+          <button onClick={() => setIsEditing(true)} 
+            className="px-4 py-2 rounded-xl text-xs font-semibold text-white transition-all hover:brightness-110"
+            style={{ background: 'rgba(249,115,22,0.15)', border: '1px solid rgba(249,115,22,0.3)', color: '#fb923c' }}>
+            Edit Profile
+          </button>
+        )}
+      </div>
+
+      <div className={`${glass} overflow-hidden`}>
+        <div className="h-24 relative" style={{ background: 'linear-gradient(135deg, rgba(249,115,22,0.15), rgba(234,88,12,0.05))' }}>
+          <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, transparent, rgba(11,12,16,0.8))' }} />
+        </div>
+        <div className="px-8 pb-8">
+          <div className="flex items-end gap-4 -mt-10 mb-7">
+            <div className="relative w-18 h-18 rounded-2xl overflow-hidden flex items-center justify-center text-xl font-bold border-2 shrink-0 group"
+              style={{ borderColor: '#08080A', background: 'rgba(249,115,22,0.15)', color: '#fb923c', width: 72, height: 72 }}>
+              {(form.profilePicture || user?.profilePicture) ? (
+                <img src={form.profilePicture || user?.profilePicture} alt="" className="w-full h-full object-cover" />
+              ) : (
+                (user?.name || 'E').charAt(0)
+              )}
+              {isEditing && (
+                <label className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity">
+                  <span className="text-[10px] text-white/80 font-medium">Upload</span>
+                  <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
+                </label>
+              )}
+            </div>
+            <div className="pb-1 w-full">
+              {isEditing ? (
+                <input value={form.name} onChange={e => setForm({...form, name: e.target.value})} className={`${inputCls} mb-2 py-2`} placeholder="Your Name" />
+              ) : (
+                <>
+                  <h3 className="text-xl font-semibold text-white">{user?.name}</h3>
+                  <p className="text-white/35 text-sm">{user?.email}</p>
+                </>
+              )}
+              <span className="inline-block mt-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium"
+                style={{ background: 'rgba(249,115,22,0.1)', border: '1px solid rgba(249,115,22,0.2)', color: '#fb923c' }}>
+                Expert
+              </span>
+            </div>
+          </div>
+
+          <div className="space-y-6">
+            {isEditing ? (
+              <>
+                <div>
+                  <label className="block text-[11px] text-white/35 uppercase tracking-widest mb-2">Bio</label>
+                  <textarea value={form.bio} onChange={e => setForm({...form, bio: e.target.value})} rows={3} placeholder="Tell clients about yourself..." className={`${inputCls} resize-none`} />
+                </div>
+                <div>
+                  <label className="block text-[11px] text-white/35 uppercase tracking-widest mb-2">Skills (comma separated)</label>
+                  <input value={form.skills} onChange={e => setForm({...form, skills: e.target.value})} placeholder="e.g. React, Node.js, Design" className={inputCls} />
+                </div>
+                <div className="flex gap-3 pt-4">
+                  <button onClick={() => setIsEditing(false)} className="flex-1 py-3 rounded-xl text-sm text-white/35 hover:text-white/60 transition-all border border-white/[0.07]">Cancel</button>
+                  <button onClick={handleSave} disabled={loading} className="flex-1 py-3 rounded-xl text-sm font-semibold text-white transition-all hover:brightness-110 disabled:opacity-50"
+                    style={{ background: 'linear-gradient(135deg,#f97316,#ea580c)', boxShadow: '0 0 24px rgba(249,115,22,0.3)' }}>
+                    {loading ? 'Saving...' : 'Save Changes'}
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <div>
+                  <p className="text-white/25 text-[10px] uppercase tracking-widest mb-2">Bio</p>
+                  <p className="text-white/65 text-sm leading-relaxed">{user?.bio || <span className="text-white/20 italic">No bio added yet.</span>}</p>
+                </div>
+                <div>
+                  <p className="text-white/25 text-[10px] uppercase tracking-widest mb-3">Skills</p>
+                  {user?.skills?.length > 0 ? (
+                    <div className="flex flex-wrap gap-2">
+                      {user.skills.map((s, i) => (
+                        <span key={i} className="px-3 py-1 rounded-xl text-xs text-white/55"
+                          style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>{s}</span>
+                      ))}
+                    </div>
+                  ) : <p className="text-white/20 italic text-sm">No skills added yet.</p>}
+                </div>
+              </>
+            )}
+            
+            <div className="grid grid-cols-3 gap-4 pt-6 border-t border-white/[0.05]">
+              {[['Total', stats.total], ['Accepted', stats.accepted], ['Completed', stats.completed]].map(([l, v]) => (
+                <div key={l} className="text-center p-4 rounded-xl" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)' }}>
+                  <p className="text-2xl font-bold text-white">{v}</p>
+                  <p className="text-white/25 text-xs mt-0.5">{l}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 /* ═══════════════════════════════════════════════════════════════
    EXPERT DASHBOARD
@@ -391,8 +556,9 @@ export default function ExpertDashboard() {
               : (user?.name || 'E').charAt(0).toUpperCase()}
           </div>
           <p className="text-white text-sm font-medium leading-tight truncate">{user?.name || 'Expert'}</p>
-          <p className="text-white/30 text-xs mt-0.5">{user?.email}</p>
-          <button onClick={logout} className="mt-3 flex items-center gap-1.5 text-xs text-white/20 hover:text-red-400/70 transition-colors">
+<p className="text-white/30 text-xs mt-0.5 truncate">{user?.email}</p>
+          <button onClick={logout} className="mt-4 flex items-center justify-center gap-2 text-xs font-semibold w-full px-4 py-2.5 rounded-xl text-white transition-all hover:brightness-110 hover:scale-[1.02]"
+            style={{ background: 'linear-gradient(135deg, #f97316, #ea580c)', boxShadow: '0 0 16px rgba(249,115,22,0.3)', border: 'none' }}>
             {Icon.logout} Sign out
           </button>
         </div>
@@ -624,58 +790,7 @@ export default function ExpertDashboard() {
 
           {/* ══ PROFILE ══ */}
           {activeNav === 'profile' && (
-            <div className="max-w-2xl">
-              <h2 className="text-2xl font-semibold text-white tracking-tight mb-6">Expert Profile</h2>
-              <div className={`${glass} overflow-hidden`}>
-                <div className="h-24 relative" style={{ background: 'linear-gradient(135deg, rgba(249,115,22,0.15), rgba(234,88,12,0.05))' }}>
-                  <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, transparent, rgba(11,12,16,0.8))' }} />
-                </div>
-                <div className="px-8 pb-8">
-                  <div className="flex items-end gap-4 -mt-10 mb-7">
-                    <div className="w-18 h-18 rounded-2xl overflow-hidden flex items-center justify-center text-xl font-bold border-2"
-                      style={{ borderColor: '#08080A', background: 'rgba(249,115,22,0.15)', color: '#fb923c', width: 72, height: 72 }}>
-                      {user?.profilePicture ? <img src={user.profilePicture} alt="" className="w-full h-full object-cover" /> : (user?.name || 'E').charAt(0)}
-                    </div>
-                    <div className="pb-1">
-                      <h3 className="text-xl font-semibold text-white">{user?.name}</h3>
-                      <p className="text-white/35 text-sm">{user?.email}</p>
-                      <span className="inline-block mt-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-medium"
-                        style={{ background: 'rgba(249,115,22,0.1)', border: '1px solid rgba(249,115,22,0.2)', color: '#fb923c' }}>
-                        Expert
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="space-y-6">
-                    {user?.bio && (
-                      <div>
-                        <p className="text-white/25 text-[10px] uppercase tracking-widest mb-2">Bio</p>
-                        <p className="text-white/65 text-sm leading-relaxed">{user.bio}</p>
-                      </div>
-                    )}
-                    {user?.skills?.length > 0 && (
-                      <div>
-                        <p className="text-white/25 text-[10px] uppercase tracking-widest mb-3">Skills</p>
-                        <div className="flex flex-wrap gap-2">
-                          {user.skills.map((s, i) => (
-                            <span key={i} className="px-3 py-1 rounded-xl text-xs text-white/55"
-                              style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)' }}>{s}</span>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                    <div className="grid grid-cols-3 gap-4 pt-6 border-t border-white/[0.05]">
-                      {[['Total', total], ['Accepted', accepted], ['Completed', completed]].map(([l, v]) => (
-                        <div key={l} className="text-center p-4 rounded-xl" style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)' }}>
-                          <p className="text-2xl font-bold text-white">{v}</p>
-                          <p className="text-white/25 text-xs mt-0.5">{l}</p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
+            <ProfileTab user={user} setUser={setUser} stats={{ total, accepted, completed }} glass={glass} />
           )}
 
           {/* ══ CATCH-ALL ══ */}

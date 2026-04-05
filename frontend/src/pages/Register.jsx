@@ -362,13 +362,21 @@ const Register = () => {
   /* ── OTP flow ─────────────────────────────────────────────── */
   const handleSendOtp = async (e) => {
     e.preventDefault();
-    if (!firstName || !lastName || !mobile || !email || !password || !gender) {
+    
+    // Automatically make sure mobile is cleanly formatted before sending
+    let formattedMobile = mobile.trim();
+    if (!formattedMobile.startsWith('+91')) {
+      formattedMobile = '+91' + formattedMobile.replace(/\D/g, '').replace(/^91/, '');
+    }
+    setMobile(formattedMobile);
+
+    if (!firstName || !lastName || !formattedMobile || !email || !password || !gender) {
       return setError('Please fill all required fields including gender');
     }
     setLoading(true);
     setError('');
     try {
-      const { data } = await api.post('/api/auth/send-otp', { identifier: mobile, channel: 'whatsapp' });
+      const { data } = await api.post('/api/auth/send-otp', { identifier: formattedMobile, channel: 'whatsapp' });
       setPreviewUrl(data.previewUrl);
       setOtpStep(true);
     } catch (err) {
@@ -380,12 +388,19 @@ const Register = () => {
 
   const handleVerifyAndRegister = async (e) => {
     e.preventDefault();
+    
+    // Re-verify the format just in case
+    let formattedMobile = mobile.trim();
+    if (!formattedMobile.startsWith('+91')) {
+      formattedMobile = '+91' + formattedMobile.replace(/\D/g, '').replace(/^91/, '');
+    }
+
     if (!otp) return setError('Please enter the OTP');
     setLoading(true);
     setError('');
     try {
       const payload = {
-        firstName, lastName, mobile, email, password, role, gender, otp,
+        firstName, lastName, mobile: formattedMobile, email, password, role, gender, otp,
         profilePicture: profilePic || null,
         ...(role === 'expert' && {
           bio,
@@ -511,7 +526,26 @@ const Register = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className={labelClass}>Mobile</label>
-                  <input type="tel" required className={inputClass} value={mobile} onChange={e => setMobile(e.target.value)} placeholder="+1 234 567 890" />
+                  <div className="relative">
+                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                      <span className="text-white/50 text-sm">+91</span>
+                    </div>
+                    <input 
+                      type="tel" 
+                      required 
+                      className={`${inputClass} pl-10`} 
+                      value={mobile.startsWith('+91') ? mobile.substring(3) : mobile} 
+                      onChange={e => {
+                        let val = e.target.value.replace(/\D/g, '');
+                        // If user pastes a number starting with 91, remove it to avoid +9191
+                        if (val.startsWith('91') && val.length > 10) {
+                          val = val.substring(2);
+                        }
+                        setMobile(val ? '+91' + val : '');
+                      }} 
+                      placeholder="98765 43210" 
+                    />
+                  </div>
                 </div>
                 <div>
                   <label className={labelClass}>Email address</label>
@@ -646,8 +680,8 @@ const Register = () => {
           </>
         ) : (
           <>
-            <h2 className="text-2xl font-medium text-center mb-2 text-white">Verify Email</h2>
-            <p className="text-center text-white/40 mb-8 text-sm">We've sent a 6-digit code to <b className="text-white/80">{email}</b></p>
+            <h2 className="text-2xl font-medium text-center mb-2 text-white">Verify Mobile Number</h2>
+            <p className="text-center text-white/40 mb-8 text-sm">We've sent a 6-digit code via WhatsApp to <b className="text-white/80">{mobile}</b></p>
 
             {error && <div className="bg-red-500/10 border border-red-500/30 text-red-400 p-3 rounded-lg mb-6 text-sm">{error}</div>}
 
@@ -679,7 +713,7 @@ const Register = () => {
                 {loading ? 'Verifying...' : 'Finish Registration'}
               </button>
               <div className="flex items-center justify-between pt-4">
-                <button type="button" onClick={() => setOtpStep(false)} className="text-white/30 hover:text-white/60 text-xs transition-colors">Edit email</button>
+                <button type="button" onClick={() => setOtpStep(false)} className="text-white/30 hover:text-white/60 text-xs transition-colors">Edit Details</button>
                 <button type="button" onClick={handleSendOtp} disabled={loading} className="text-orange-400/70 hover:text-orange-400 text-xs transition-colors disabled:opacity-50 font-medium">Resend code</button>
               </div>
             </form>
