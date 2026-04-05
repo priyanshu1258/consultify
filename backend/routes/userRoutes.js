@@ -56,6 +56,7 @@ router.put('/profile', protect, async (req, res) => {
         bio: updatedUser.bio,
         pricingPerSession: updatedUser.pricingPerSession,
         availabilitySlots: updatedUser.availabilitySlots,
+        profilePicture: updatedUser.profilePicture,
       });
     } else {
       res.status(404).json({ message: 'User not found' });

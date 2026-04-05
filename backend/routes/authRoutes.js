@@ -184,6 +184,9 @@ router.post('/login', async (req, res) => {
         bio: user.bio,
         pricingPerSession: user.pricingPerSession,
         skills: user.skills,
+        profilePicture: user.profilePicture,
+        availabilitySlots: user.availabilitySlots,
+        expertDocuments: user.expertDocuments,
         token: generateToken(user._id)
       });
     } else {
