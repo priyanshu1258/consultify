@@ -4,6 +4,9 @@ const User = require("../models/User");
 const Otp = require("../models/Otp");
 const jwt = require("jsonwebtoken");
 const { sendWhatsAppMessage } = require("../whatsappService");
+const upload = require("../middleware/upload");
+const fs = require("fs");
+const path = require("path");
 
 const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET || "secret", {
@@ -51,7 +54,7 @@ router.post("/send-otp", async (req, res) => {
 
 // @route   POST /api/auth/register
 // @desc    Register a new user (consultee or expert)
-router.post("/register", async (req, res) => {
+router.post("/register", upload.fields([{ name: 'profilePicture', maxCount: 1 }, { name: 'expertDocuments', maxCount: 5 }]), async (req, res) => {
   try {
     const {
       firstName,
@@ -61,36 +64,72 @@ router.post("/register", async (req, res) => {
       password,
       role,
       gender,
-      profilePicture,
       bio,
       pricingPerSession,
       skills,
-      expertDocuments,
       otp,
     } = req.body;
 
-    if (!otp) return res.status(400).json({ message: "OTP is required" });
+    const cleanupFiles = () => {
+      if (req.files) {
+        if (req.files.profilePicture) {
+          req.files.profilePicture.forEach(file => fs.unlink(file.path, () => {}));
+        }
+        if (req.files.expertDocuments) {
+          req.files.expertDocuments.forEach(file => fs.unlink(file.path, () => {}));
+        }
+      }
+    };
+
+    if (!otp) {
+      cleanupFiles();
+      return res.status(400).json({ message: "OTP is required" });
+    }
 
     // Identify by mobile for OTP
     const identifier = mobile;
     const validOtp = await Otp.findOne({ identifier, otp });
 
-    if (!validOtp)
+    if (!validOtp) {
+      cleanupFiles();
       return res.status(400).json({ message: "Invalid or expired OTP" });
+    }
 
     let userExists = await User.findOne({ email });
-    if (userExists)
+    if (userExists) {
+      cleanupFiles();
       return res.status(400).json({ message: "Email is already registered" });
+    }
 
     if (mobile) {
       let mobileExists = await User.findOne({ mobile });
-      if (mobileExists)
+      if (mobileExists) {
+        cleanupFiles();
         return res
           .status(400)
           .json({ message: "Mobile number is already registered" });
+      }
     }
 
     const name = `${firstName} ${lastName}`.trim();
+    
+    const parsedSkills = skills ? JSON.parse(skills) : [];
+    
+    let profilePictureUrl = null;
+    if (req.files && req.files.profilePicture && req.files.profilePicture.length > 0) {
+      const file = req.files.profilePicture[0];
+      // Store accessible URL path
+      profilePictureUrl = `${req.protocol}://${req.get('host')}/uploads/${file.filename}`;
+    }
+
+    let expertDocs = [];
+    if (req.files && req.files.expertDocuments) {
+      expertDocs = req.files.expertDocuments.map(file => ({
+        name: file.originalname,
+        type: file.mimetype,
+        data: `${req.protocol}://${req.get('host')}/uploads/${file.filename}` // using data field as url to support existing frontend Admin dashboard
+      }));
+    }
 
     const user = await User.create({
       name,
@@ -99,11 +138,11 @@ router.post("/register", async (req, res) => {
       password,
       role: role || "consultee",
       gender,
-      profilePicture: profilePicture || null,
+      profilePicture: profilePictureUrl,
       bio,
-      pricingPerSession,
-      skills,
-      expertDocuments: expertDocuments || [],
+      pricingPerSession: pricingPerSession ? Number(pricingPerSession) : 0,
+      skills: parsedSkills,
+      expertDocuments: expertDocs,
     });
 
     await Otp.deleteMany({ identifier });
@@ -125,6 +164,14 @@ router.post("/register", async (req, res) => {
       });
     }
   } catch (error) {
+    if (req.files) {
+        if (req.files.profilePicture) {
+          req.files.profilePicture.forEach(file => fs.unlink(file.path, () => {}));
+        }
+        if (req.files.expertDocuments) {
+          req.files.expertDocuments.forEach(file => fs.unlink(file.path, () => {}));
+        }
+    }
     res.status(500).json({ message: error.message });
   }
 });
